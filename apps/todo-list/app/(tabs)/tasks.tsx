@@ -1,25 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Text, View, FlatList, StyleSheet, Pressable } from 'react-native';
-import mockTodos, { Todo } from '../../constants/mockTodos';
+import { useFocusEffect } from '@react-navigation/native';
+import { Task, TaskWithSubtasks } from '@todolist/shared-types';
 import { CHIPS, FILTER_CHIPS } from '../../constants/chips';
 import useDateFormatter from '../../hooks/useDateFormatter';
 import Chip from '../../components/Chip';
 import TaskModal from '../../components/TaskModal';
 import { useRouter } from 'expo-router';
+import { getAllTasks, createTask } from '../../services/tasks';
+import { getSubtasksForTask } from '../../services/subtasks';
+import { initDb } from '../../services';
 
 export default function TasksPage() {
   const router = useRouter();
-  const [todos, setTodos] = useState<Todo[]>(mockTodos);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasksWithSubtasks, setTasksWithSubtasks] = useState<TaskWithSubtasks[]>([]);
   const { formatRange } = useDateFormatter();
   const [filter, setFilter] = useState<'all' | 'low' | 'medium' | 'high'>('all');
   const [modalVisible, setModalVisible] = useState(false);
 
-  const filteredTodos = filter === 'all' ? todos : todos.filter((t) => t.priority === filter);
+  const loadTasks = useCallback(async () => {
+    try {
+      // Ensure database is initialized before loading tasks
+      await initDb();
+      const loadedTasks = await getAllTasks();
+      setTasks(loadedTasks);
+      
+      // Load subtasks for each task
+      const tasksWithSubs = await Promise.all(
+        loadedTasks.map(async (task) => {
+          const subtasks = await getSubtasksForTask(task.id);
+          return { ...task, subtasks };
+        })
+      );
+      setTasksWithSubtasks(tasksWithSubs);
+    } catch (error) {
+      console.error('Failed to load tasks:', error);
+    }
+  }, []);
 
-  const renderItem = ({ item }: { item: Todo }) => {
-    const dateLabel = formatRange(item.startDate, item.endDate);
+  useFocusEffect(
+    useCallback(() => {
+      loadTasks();
+    }, [loadTasks])
+  );
 
-    const tag = CHIPS.find((t) => t.id === item.priority) ?? { color: '#999', label: item.priority };
+
+  const filteredTasks = filter === 'all' ? tasksWithSubtasks : tasksWithSubtasks.filter((t) => t.priority === filter);
+
+  const renderItem = ({ item }: { item: TaskWithSubtasks }) => {
+    const dateLabel = formatRange(item.startDate ?? undefined, item.endDate ?? undefined);
+    const priority = item.priority ?? 'medium';
+    const tag = CHIPS.find((t) => t.id === priority) ?? { color: '#999', label: priority };
 
     return (
       <Pressable
@@ -60,13 +92,24 @@ export default function TasksPage() {
         })}
       </View>
 
-      <FlatList data={filteredTodos} keyExtractor={(item) => item.id} renderItem={renderItem} contentContainerStyle={styles.list} />
+      <FlatList data={filteredTasks} keyExtractor={(item) => item.id} renderItem={renderItem} contentContainerStyle={styles.list} />
 
       <Pressable style={styles.fab} onPress={() => setModalVisible(true)}>
         <Text style={styles.fabText}>+</Text>
       </Pressable>
 
-      <TaskModal visible={modalVisible} onClose={() => setModalVisible(false)} onCreate={(todo) => setTodos((prev) => [todo, ...prev])} />
+      <TaskModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        onCreate={async (task) => {
+          try {
+            const created = await createTask(task);
+            await loadTasks(); // Reload to get the new task with subtasks
+          } catch (error) {
+            console.error('Failed to create task:', error);
+          }
+        }}
+      />
     </View>
   );
 }

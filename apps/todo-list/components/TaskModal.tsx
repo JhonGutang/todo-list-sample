@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Modal, View, Text, TextInput, StyleSheet, TouchableOpacity, ScrollView, Animated, Easing } from 'react-native';
-import { Todo } from '../constants/mockTodos';
+import { Task } from '@todolist/shared-types';
 import { CHIPS } from '../constants/chips';
 import Chip from './Chip';
 import DateInput from './DateInput';
@@ -8,7 +8,7 @@ import DateInput from './DateInput';
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onCreate: (todo: Todo) => void;
+  onCreate: (task: Task) => void;
 };
 
 export default function TaskModal({ visible, onClose, onCreate }: Props) {
@@ -52,16 +52,20 @@ export default function TaskModal({ visible, onClose, onCreate }: Props) {
 
   const handleCreate = () => {
     if (!name.trim()) return;
-    const todo: Todo = {
+    const now = new Date().toISOString();
+    const task: Task = {
       id: String(Date.now()),
       name: name.trim(),
-      description: description.trim() || undefined,
+      description: description.trim() || null,
       priority,
-      startDate: startDate ? new Date(startDate).toISOString() : new Date().toISOString(),
-      endDate: endDate ? new Date(endDate).toISOString() : undefined,
+      startDate: startDate ? new Date(startDate).toISOString() : null,
+      endDate: endDate ? new Date(endDate).toISOString() : null,
+      createdAt: now,
+      updatedAt: now,
+      completed: false,
     };
 
-    onCreate(todo);
+    onCreate(task);
     reset();
     onClose();
   };

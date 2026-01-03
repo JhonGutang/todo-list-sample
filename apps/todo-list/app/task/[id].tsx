@@ -1,26 +1,78 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import mockTodos from '../../constants/mockTodos';
+import { Task, Subtask } from '@todolist/shared-types';
 import useDateFormatter from '../../hooks/useDateFormatter';
 import Chip from '../../components/Chip';
 import CalendarRangePicker from '../../components/CalendarRangePicker';
 import SubtaskItem from '../../components/SubtaskItem';
 import AddSubtaskModal from '../../components/AddSubtaskModal';
+import { getTaskById, updateTask, deleteTask } from '../../services/tasks';
+import { getSubtasksForTask, addSubtask, updateSubtask, toggleSubtask } from '../../services/subtasks';
+import { initDb } from '../../services';
 
 export default function TaskDetail() {
   const params = useLocalSearchParams();
   const router = useRouter();
   const { id } = params as { id?: string };
-  const todo = mockTodos.find((t) => t.id === id);
   const { formatRange, formatEndDate } = useDateFormatter();
-  const [localTodo, setLocalTodo] = useState(() => (todo ? { ...todo } : undefined));
+  const [task, setTask] = useState<Task | null>(null);
+  const [subtasks, setSubtasks] = useState<Subtask[]>([]);
+  const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
   const [subtaskModal, setSubtaskModal] = useState(false);
-  const [editingSubtask, setEditingSubtask] = useState<string | undefined>(undefined);
+  const [editingSubtask, setEditingSubtask] = useState<Subtask | undefined>(undefined);
 
-  if (!todo) {
+  useEffect(() => {
+    if (id) {
+      loadTask();
+    }
+  }, [id]);
+
+  const loadTask = async () => {
+    if (!id) return;
+    try {
+      setLoading(true);
+      // Ensure database is initialized before loading task
+      await initDb();
+      const loadedTask = await getTaskById(id);
+      if (loadedTask) {
+        setTask(loadedTask);
+        const loadedSubtasks = await getSubtasksForTask(id);
+        setSubtasks(loadedSubtasks);
+      }
+    } catch (error) {
+      console.error('Failed to load task:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!id || !task) return;
+    try {
+      await deleteTask(id);
+      router.back();
+    } catch (error) {
+      console.error('Failed to delete task:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Pressable style={styles.back} onPress={() => router.back()}>
+          <Text style={styles.backText}>Back</Text>
+        </Pressable>
+        <View style={styles.center}>
+          <Text>Loading...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (!task) {
     return (
       <View style={styles.container}>
         <Pressable style={styles.back} onPress={() => router.back()}>
@@ -47,7 +99,13 @@ export default function TaskDetail() {
             <Pressable onPress={() => { setMenuOpen(false); /* TODO: implement edit */ }} style={styles.menuItem}>
               <Text style={styles.menuItemText}>Edit</Text>
             </Pressable>
-            <Pressable onPress={() => { setMenuOpen(false); /* TODO: implement delete */ }} style={styles.menuItem}>
+            <Pressable
+              onPress={() => {
+                setMenuOpen(false);
+                handleDelete();
+              }}
+              style={styles.menuItem}
+            >
               <Text style={[styles.menuItemText, { color: '#e74c3c' }]}>Delete</Text>
             </Pressable>
           </View>
@@ -56,84 +114,91 @@ export default function TaskDetail() {
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.calendarCard}>
-          <Text style={styles.rangeText}>{formatRange(localTodo?.startDate, localTodo?.endDate)}</Text>
+          <Text style={styles.rangeText}>{formatRange(task.startDate ?? undefined, task.endDate ?? undefined)}</Text>
           <CalendarRangePicker
-            startDate={localTodo?.startDate}
-            endDate={localTodo?.endDate}
-            onChange={(s, e) => {
-              // update local todo and mutate mockTodos for persistence in this demo
-              if (!localTodo) return;
-              const updated = { ...localTodo, startDate: s ?? localTodo.startDate, endDate: e ?? localTodo.endDate };
-              setLocalTodo(updated);
-              const idx = mockTodos.findIndex((t) => t.id === localTodo.id);
-              if (idx >= 0) mockTodos[idx] = updated;
+            startDate={task.startDate ?? undefined}
+            endDate={task.endDate ?? undefined}
+            onChange={async (s, e) => {
+              if (!id) return;
+              try {
+                const updated = await updateTask(id, {
+                  startDate: s ?? null,
+                  endDate: e ?? null,
+                });
+                if (updated) {
+                  setTask(updated);
+                }
+              } catch (error) {
+                console.error('Failed to update task dates:', error);
+              }
             }}
           />
         </View>
         <AddSubtaskModal
           visible={subtaskModal}
-          initial={editingSubtask ? localTodo?.subtasks?.find((s) => s.id === editingSubtask) : undefined}
-          onClose={() => { setSubtaskModal(false); setEditingSubtask(undefined); }}
-          onSave={(title, description) => {
-            if (!localTodo) return;
-            if (editingSubtask) {
-              const subs = (localTodo.subtasks ?? []).map((ss) => (ss.id === editingSubtask ? { ...ss, title, description } : ss));
-              const updated = { ...localTodo, subtasks: subs };
-              setLocalTodo(updated);
-              const idx = mockTodos.findIndex((t) => t.id === localTodo.id);
-              if (idx >= 0) mockTodos[idx] = updated;
-            } else {
-              // generate a simple incrementing numeric id (per-todo)
-              const existing = (localTodo.subtasks ?? []).map((s) => Number(s.id)).filter((n) => !Number.isNaN(n));
-              const max = existing.length ? Math.max(...existing) : 0;
-              const idNew = String(max + 1);
-              const newSub = { id: idNew, title, description, completed: false };
-              const subs = [...(localTodo.subtasks ?? []), newSub];
-              const updated = { ...localTodo, subtasks: subs };
-              setLocalTodo(updated);
-              const idx = mockTodos.findIndex((t) => t.id === localTodo.id);
-              if (idx >= 0) mockTodos[idx] = updated;
+          initial={editingSubtask ? { title: editingSubtask.title, description: editingSubtask.description ?? undefined } : undefined}
+          onClose={() => {
+            setSubtaskModal(false);
+            setEditingSubtask(undefined);
+          }}
+          onSave={async (title, description) => {
+            if (!id) return;
+            try {
+              if (editingSubtask) {
+                const updated = await updateSubtask(editingSubtask.id, { title, description: description ?? null });
+                if (updated) {
+                  await loadTask();
+                }
+              } else {
+                await addSubtask(id, { title, description: description ?? null });
+                await loadTask();
+              }
+              setSubtaskModal(false);
+              setEditingSubtask(undefined);
+            } catch (error) {
+              console.error('Failed to save subtask:', error);
             }
           }}
         />
 
         <View style={styles.card}>
-          <Text style={styles.title}>{todo.name}</Text>
-          {todo.description ? <Text style={styles.desc}>{todo.description}</Text> : null}
+          <Text style={styles.title}>{task.name}</Text>
+          {task.description ? <Text style={styles.desc}>{task.description}</Text> : null}
           <View style={styles.rowBetween}>
-            <Chip label={todo.priority} variant="label" color={getPriorityColor(todo.priority)} />
-            <Text style={styles.idText}>ID: {todo.id}</Text>
+            <Chip label={task.priority ?? 'medium'} variant="label" color={getPriorityColor(task.priority ?? 'medium')} />
+            <Text style={styles.idText}>ID: {task.id}</Text>
           </View>
 
           {/* Action buttons moved to top-right menu */}
         </View>
 
         <View style={styles.timelineContainer}>
-          {(localTodo?.subtasks ?? []).length === 0 ? (
+          {subtasks.length === 0 ? (
             <Text style={{ color: '#666', marginTop: 8 }}>No subtasks</Text>
           ) : (
-            (localTodo?.subtasks ?? []).map((s, idx) => (
+            subtasks.map((s, idx) => (
               <View key={s.id} style={styles.timelineItem}>
                 <View style={styles.timelineMarker}>
                   <View style={styles.timelineDot} />
-                  {idx !== (localTodo?.subtasks?.length ?? 0) - 1 ? <View style={styles.timelineLine} /> : null}
+                  {idx !== subtasks.length - 1 ? <View style={styles.timelineLine} /> : null}
                 </View>
                 <View style={{ flex: 1 }}>
                   <SubtaskItem
                     id={s.id}
                     title={s.title}
-                    description={s.description}
-                    completed={s.completed}
-                    onToggle={(sid) => {
-                      if (!localTodo) return;
-                      const subs = (localTodo.subtasks ?? []).map((ss) => (ss.id === sid ? { ...ss, completed: !ss.completed } : ss));
-                      const updated = { ...localTodo, subtasks: subs };
-                      setLocalTodo(updated);
-                      const idx2 = mockTodos.findIndex((t) => t.id === localTodo.id);
-                      if (idx2 >= 0) mockTodos[idx2] = updated;
+                    description={s.description ?? undefined}
+                    completed={s.completed ?? false}
+                    onToggle={async (sid) => {
+                      try {
+                        await toggleSubtask(sid);
+                        await loadTask();
+                      } catch (error) {
+                        console.error('Failed to toggle subtask:', error);
+                      }
                     }}
                     onEdit={(sid) => {
-                      setEditingSubtask(sid);
+                      const subtask = subtasks.find((st) => st.id === sid);
+                      setEditingSubtask(subtask);
                       setSubtaskModal(true);
                     }}
                   />
@@ -143,7 +208,13 @@ export default function TaskDetail() {
           )}
 
           <View style={styles.addButtonWrap}>
-            <Pressable style={styles.addButton} onPress={() => { setEditingSubtask(undefined); setSubtaskModal(true); }}>
+            <Pressable
+              style={styles.addButton}
+              onPress={() => {
+                setEditingSubtask(undefined);
+                setSubtaskModal(true);
+              }}
+            >
               <Text style={styles.addButtonText}>Add Subtask</Text>
             </Pressable>
           </View>
