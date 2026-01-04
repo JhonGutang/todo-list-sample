@@ -6,7 +6,6 @@ function rowToSubtask(row: any): Subtask {
     id: row.id,
     task_id: row.task_id,
     title: row.title,
-    description: row.description,
     completed: !!row.completed,
     order: row.order
   };
@@ -24,13 +23,12 @@ function generateId() {
   return Date.now().toString() + Math.random().toString(36).slice(2, 8);
 }
 
-export async function addSubtask(taskId: string, s: { title: string; description?: string | null; order?: number | null }): Promise<Subtask> {
+export async function addSubtask(taskId: string, s: { title: string; order?: number | null }): Promise<Subtask> {
   const id = generateId();
-  await executeSqlAsync('INSERT INTO subtasks (id, task_id, title, description, completed, "order") VALUES (?, ?, ?, ?, ?, ?)', [
+  await executeSqlAsync('INSERT INTO subtasks (id, task_id, title, completed, "order") VALUES (?, ?, ?, ?, ?)', [
     id,
     taskId,
     s.title,
-    s.description ?? null,
     0,
     s.order ?? null
   ]);
@@ -44,9 +42,8 @@ export async function updateSubtask(id: string, updates: Partial<Subtask>): Prom
   if (rows0.length === 0) return null;
   const existing = rowToSubtask(rows0.item(0));
   const merged = { ...existing, ...updates } as Subtask;
-  await executeSqlAsync('UPDATE subtasks SET title=?, description=?, completed=?, "order"=? WHERE id=?', [
+  await executeSqlAsync('UPDATE subtasks SET title=?, completed=?, "order"=? WHERE id=?', [
     merged.title,
-    merged.description ?? null,
     merged.completed ? 1 : 0,
     merged.order ?? null,
     id

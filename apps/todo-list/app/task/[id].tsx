@@ -5,9 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Task, Subtask } from '@todolist/shared-types';
 import useDateFormatter from '../../hooks/useDateFormatter';
 import Chip from '../../components/Chip';
-import CalendarRangePicker from '../../components/CalendarRangePicker';
-import SubtaskItem from '../../components/SubtaskItem';
-import AddSubtaskModal from '../../components/AddSubtaskModal';
+import AddSubtaskModal from '../../components/tasks/AddSubtaskModal';
 import { getTaskById, updateTask, deleteTask } from '../../services/tasks';
 import { getSubtasksForTask, addSubtask, updateSubtask, toggleSubtask } from '../../services/subtasks';
 import { initDb } from '../../services';
@@ -113,50 +111,61 @@ export default function TaskDetail() {
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        <View style={styles.calendarCard}>
-          <Text style={styles.rangeText}>{formatRange(task.startDate ?? undefined, task.endDate ?? undefined)}</Text>
-          <CalendarRangePicker
-            startDate={task.startDate ?? undefined}
-            endDate={task.endDate ?? undefined}
-            onChange={async (s, e) => {
-              if (!id) return;
-              try {
-                const updated = await updateTask(id, {
-                  startDate: s ?? null,
-                  endDate: e ?? null,
-                });
-                if (updated) {
-                  setTask(updated);
-                }
-              } catch (error) {
-                console.error('Failed to update task dates:', error);
-              }
-            }}
-          />
-        </View>
         <AddSubtaskModal
           visible={subtaskModal}
-          initial={editingSubtask ? { title: editingSubtask.title, description: editingSubtask.description ?? undefined } : undefined}
+          initial={editingSubtask ? { title: editingSubtask.title } : undefined}
           onClose={() => {
             setSubtaskModal(false);
             setEditingSubtask(undefined);
           }}
-          onSave={async (title, description) => {
+          onSave={async (title) => {
             if (!id) return;
-            try {
-              if (editingSubtask) {
-                const updated = await updateSubtask(editingSubtask.id, { title, description: description ?? null });
-                if (updated) {
-                  await loadTask();
-                }
-              } else {
-                await addSubtask(id, { title, description: description ?? null });
-                await loadTask();
-              }
+
+            if (editingSubtask) {
+              // Optimistic update for editing
+              setSubtasks((prev) =>
+                prev.map((st) =>
+                  st.id === editingSubtask.id ? { ...st, title } : st
+                )
+              );
+
               setSubtaskModal(false);
               setEditingSubtask(undefined);
-            } catch (error) {
-              console.error('Failed to save subtask:', error);
+
+              // Update database in background
+              try {
+                await updateSubtask(editingSubtask.id, { title });
+              } catch (error) {
+                console.error('Failed to update subtask:', error);
+                // Reload on error
+                await loadTask();
+              }
+            } else {
+              // Optimistic update for adding
+              const tempId = 'temp_' + Date.now();
+              const newSubtask: Subtask = {
+                id: tempId,
+                task_id: id,
+                title,
+                completed: false,
+                order: subtasks.length,
+              };
+
+              setSubtasks((prev) => [...prev, newSubtask]);
+              setSubtaskModal(false);
+
+              // Add to database in background
+              try {
+                const created = await addSubtask(id, { title });
+                // Replace temp subtask with real one
+                setSubtasks((prev) =>
+                  prev.map((st) => (st.id === tempId ? created : st))
+                );
+              } catch (error) {
+                console.error('Failed to add subtask:', error);
+                // Remove temp subtask on error
+                setSubtasks((prev) => prev.filter((st) => st.id !== tempId));
+              }
             }
           }}
         />
@@ -172,52 +181,68 @@ export default function TaskDetail() {
           {/* Action buttons moved to top-right menu */}
         </View>
 
-        <View style={styles.timelineContainer}>
+        <View style={styles.subtasksCard}>
+          <Text style={styles.subtasksTitle}>Subtasks</Text>
+
           {subtasks.length === 0 ? (
-            <Text style={{ color: '#666', marginTop: 8 }}>No subtasks</Text>
+            <Text style={styles.noSubtasksText}>No subtasks yet</Text>
           ) : (
-            subtasks.map((s, idx) => (
-              <View key={s.id} style={styles.timelineItem}>
-                <View style={styles.timelineMarker}>
-                  <View style={styles.timelineDot} />
-                  {idx !== subtasks.length - 1 ? <View style={styles.timelineLine} /> : null}
-                </View>
-                <View style={{ flex: 1 }}>
-                  <SubtaskItem
-                    id={s.id}
-                    title={s.title}
-                    description={s.description ?? undefined}
-                    completed={s.completed ?? false}
-                    onToggle={async (sid) => {
+            <ScrollView style={styles.subtasksScroll} nestedScrollEnabled>
+              {subtasks.map((s) => (
+                <View key={s.id} style={styles.subtaskRow}>
+                  <Pressable
+                    style={styles.radioButton}
+                    onPress={async () => {
+                      // Optimistic update - update UI immediately
+                      setSubtasks((prev) =>
+                        prev.map((st) =>
+                          st.id === s.id ? { ...st, completed: !st.completed } : st
+                        )
+                      );
+
+                      // Then update database in background
                       try {
-                        await toggleSubtask(sid);
-                        await loadTask();
+                        await toggleSubtask(s.id);
                       } catch (error) {
                         console.error('Failed to toggle subtask:', error);
+                        // Revert on error
+                        setSubtasks((prev) =>
+                          prev.map((st) =>
+                            st.id === s.id ? { ...st, completed: !st.completed } : st
+                          )
+                        );
                       }
                     }}
-                    onEdit={(sid) => {
-                      const subtask = subtasks.find((st) => st.id === sid);
+                  >
+                    {s.completed && <View style={styles.radioButtonInner} />}
+                  </Pressable>
+                  <Text style={[styles.subtaskTitle, s.completed && styles.subtaskTitleCompleted]}>
+                    {s.title}
+                  </Text>
+                  <Pressable
+                    onPress={() => {
+                      const subtask = subtasks.find((st) => st.id === s.id);
                       setEditingSubtask(subtask);
                       setSubtaskModal(true);
                     }}
-                  />
+                    style={styles.editButton}
+                  >
+                    <Text style={styles.editButtonText}>✎</Text>
+                  </Pressable>
                 </View>
-              </View>
-            ))
+              ))}
+            </ScrollView>
           )}
 
-          <View style={styles.addButtonWrap}>
-            <Pressable
-              style={styles.addButton}
-              onPress={() => {
-                setEditingSubtask(undefined);
-                setSubtaskModal(true);
-              }}
-            >
-              <Text style={styles.addButtonText}>Add Subtask</Text>
-            </Pressable>
-          </View>
+          <Pressable
+            style={styles.addSubtaskButton}
+            onPress={() => {
+              setEditingSubtask(undefined);
+              setSubtaskModal(true);
+            }}
+          >
+            <Text style={styles.addSubtaskText}>+ Add subtask</Text>
+          </Pressable>
         </View>
       </ScrollView>
     </View>
@@ -236,13 +261,6 @@ const styles = StyleSheet.create({
   backText: { color: '#007bff', fontWeight: '600' },
   content: { padding: 16, paddingBottom: 80 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  calendarCard: { backgroundColor: '#f2f7ff', padding: 12, borderRadius: 8, marginBottom: 12 },
-  calendarTitle: { fontWeight: '700', marginBottom: 8 },
-  datesRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  dateBox: { flex: 1, alignItems: 'center', padding: 8 },
-  dateLabel: { color: '#555', marginBottom: 4 },
-  dateValue: { fontSize: 18, fontWeight: '700' },
-  rangeText: { marginTop: 8, color: '#666', fontSize: 12, textAlign: 'center' },
   card: { backgroundColor: '#f9f9f9', padding: 12, borderRadius: 8 },
   title: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
   desc: { color: '#555', marginBottom: 12 },
@@ -259,13 +277,75 @@ const styles = StyleSheet.create({
   menuPopup: { position: 'absolute', right: 0, top: 36, backgroundColor: '#fff', borderRadius: 8, paddingVertical: 8, width: 120, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 6, elevation: 6 },
   menuItem: { paddingVertical: 8, paddingHorizontal: 12 },
   menuItemText: { fontWeight: '600' },
-  addSubtaskBtn: { paddingHorizontal: 8, paddingVertical: 4 },
-  timelineContainer: { marginTop: 12, padding: 8 },
-  timelineItem: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 8 },
-  timelineMarker: { width: 24, alignItems: 'center' },
-  timelineDot: { width: 10, height: 10, borderRadius: 6, backgroundColor: '#007bff', marginTop: 4 },
-  timelineLine: { width: 2, flex: 1, backgroundColor: '#e6eefc', marginTop: 6 },
-  addButtonWrap: { alignItems: 'center', marginTop: 12 },
-  addButton: { backgroundColor: '#007bff', width: '80%', paddingVertical: 12, borderRadius: 8, alignItems: 'center' },
-  addButtonText: { color: '#fff', fontWeight: '700' },
+  subtasksCard: {
+    backgroundColor: '#f9f9f9',
+    padding: 16,
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  subtasksTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 12,
+    color: '#111',
+  },
+  noSubtasksText: {
+    color: '#666',
+    fontSize: 14,
+    marginBottom: 12,
+  },
+  subtasksScroll: {
+    maxHeight: 250,
+    marginBottom: 12,
+  },
+  subtaskRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    paddingVertical: 4,
+  },
+  radioButton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#007bff',
+    marginRight: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioButtonInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#007bff',
+  },
+  subtaskTitle: {
+    flex: 1,
+    fontSize: 15,
+    color: '#111',
+  },
+  subtaskTitleCompleted: {
+    textDecorationLine: 'line-through',
+    color: '#888',
+  },
+  editButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  editButtonText: {
+    fontSize: 18,
+    color: '#666',
+  },
+  addSubtaskButton: {
+    backgroundColor: '#007bff',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  addSubtaskText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
+  },
 });

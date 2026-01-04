@@ -53,6 +53,7 @@ export async function initDb() {
 initDb().catch(() => { });
 
 export * from '@todolist/shared-types';
+export * from './categories';
 export * from './settings';
 export * from './subtasks';
 export * from './tags';

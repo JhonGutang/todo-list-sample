@@ -92,6 +92,50 @@ CREATE INDEX IF NOT EXISTS idx_pomodoro_sessions_task_id ON pomodoro_sessions(ta
 
 COMMIT;
 `
+  },
+  {
+    name: '003_add_categories.sql',
+    sql: `
+BEGIN TRANSACTION;
+
+-- Create categories table
+CREATE TABLE IF NOT EXISTS categories (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE,
+  color TEXT,
+  isDefault INTEGER NOT NULL DEFAULT 0,
+  createdAt TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- Insert default categories
+INSERT OR IGNORE INTO categories (id, name, color, isDefault, createdAt) VALUES
+  ('cat_work', 'Work', '#3b82f6', 1, datetime('now')),
+  ('cat_personal', 'Personal', '#8b5cf6', 1, datetime('now')),
+  ('cat_completed', 'Completed', '#10b981', 1, datetime('now'));
+
+-- Add category_id column to tasks table
+ALTER TABLE tasks ADD COLUMN category_id TEXT REFERENCES categories(id) ON DELETE SET NULL;
+
+-- Set default category to 'Personal' for existing tasks
+UPDATE tasks SET category_id = 'cat_personal' WHERE category_id IS NULL;
+
+-- Create index for efficient category filtering
+CREATE INDEX IF NOT EXISTS idx_tasks_category_id ON tasks(category_id);
+
+COMMIT;
+`
+  },
+  {
+    name: '004_add_completed_category.sql',
+    sql: `
+BEGIN TRANSACTION;
+
+-- Add the Completed category if it doesn't exist
+INSERT OR IGNORE INTO categories (id, name, color, isDefault, createdAt) VALUES
+  ('cat_completed', 'Completed', '#10b981', 1, datetime('now'));
+
+COMMIT;
+`
   }
 ];
 

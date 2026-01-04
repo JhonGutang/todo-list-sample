@@ -64,11 +64,10 @@ export async function seedIfEmpty() {
         id: subtask.id ?? generateId(),
         task_id: subtask.task_id,
         title: subtask.title,
-        description: subtask.description ?? null,
         completed: !!subtask.completed,
         order: subtask.order ?? null
       };
-      await db.runAsync('INSERT OR IGNORE INTO subtasks (id, task_id, title, description, completed, "order") VALUES (?, ?, ?, ?, ?, ?)', [sub.id, sub.task_id, sub.title, sub.description ?? null, sub.completed ? 1 : 0, sub.order ?? null]);
+      await db.runAsync('INSERT OR IGNORE INTO subtasks (id, task_id, title, completed, "order") VALUES (?, ?, ?, ?, ?)', [sub.id, sub.task_id, sub.title, sub.completed ? 1 : 0, sub.order ?? null]);
     }
   });
 }

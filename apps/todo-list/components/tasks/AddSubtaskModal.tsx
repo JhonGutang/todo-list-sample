@@ -4,18 +4,16 @@ import { Modal, View, Text, TextInput, Pressable, StyleSheet } from 'react-nativ
 type Props = {
   visible: boolean;
   onClose: () => void;
-  onSave: (title: string, description?: string) => void;
-  initial?: { title?: string; description?: string };
+  onSave: (title: string) => void;
+  initial?: { title?: string };
 };
 
 export default function AddSubtaskModal({ visible, onClose, onSave, initial }: Props) {
   const [title, setTitle] = useState(initial?.title ?? '');
-  const [description, setDescription] = useState(initial?.description ?? '');
 
   useEffect(() => {
     if (visible) {
       setTitle(initial?.title ?? '');
-      setDescription(initial?.description ?? '');
     }
   }, [visible, initial]);
 
@@ -25,7 +23,6 @@ export default function AddSubtaskModal({ visible, onClose, onSave, initial }: P
         <View style={styles.card}>
           <Text style={styles.header}>Subtask</Text>
           <TextInput placeholder="Title" value={title} onChangeText={setTitle} style={styles.input} />
-          <TextInput placeholder="Description (optional)" value={description} onChangeText={setDescription} style={[styles.input, { height: 80 }]} multiline />
 
           <View style={styles.row}>
             <Pressable style={[styles.btn, styles.cancel]} onPress={onClose}>
@@ -35,7 +32,7 @@ export default function AddSubtaskModal({ visible, onClose, onSave, initial }: P
               style={[styles.btn, styles.save]}
               onPress={() => {
                 if (!title.trim()) return;
-                onSave(title.trim(), description.trim() || undefined);
+                onSave(title.trim());
                 onClose();
               }}
             >

@@ -9,6 +9,7 @@ function rowToTask(row: any): Task {
     priority: row.priority,
     startDate: row.startDate,
     endDate: row.endDate,
+    category_id: row.category_id,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     completed: !!row.completed,
@@ -40,8 +41,8 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
   const id = data.id ?? generateId();
   const now = new Date().toISOString();
   await executeSqlAsync(
-    `INSERT INTO tasks (id, name, description, priority, startDate, endDate, createdAt, updatedAt, completed, pomodoro_estimated, pomodoro_completed)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO tasks (id, name, description, priority, startDate, endDate, category_id, createdAt, updatedAt, completed, pomodoro_estimated, pomodoro_completed)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       id,
       data.name || '',
@@ -49,6 +50,7 @@ export async function createTask(data: Partial<Task>): Promise<Task> {
       data.priority || 'medium',
       data.startDate || null,
       data.endDate || null,
+      data.category_id || 'cat_personal',
       now,
       now,
       data.completed ? 1 : 0,
@@ -64,13 +66,14 @@ export async function updateTask(id: string, updates: Partial<Task>): Promise<Ta
   if (!existing) return null;
   const merged = { ...existing, ...updates, updatedAt: new Date().toISOString() } as Task;
   await executeSqlAsync(
-    `UPDATE tasks SET name=?, description=?, priority=?, startDate=?, endDate=?, updatedAt=?, completed=?, pomodoro_estimated=?, pomodoro_completed=? WHERE id=?`,
+    `UPDATE tasks SET name=?, description=?, priority=?, startDate=?, endDate=?, category_id=?, updatedAt=?, completed=?, pomodoro_estimated=?, pomodoro_completed=? WHERE id=?`,
     [
       merged.name,
       merged.description ?? null,
       merged.priority ?? 'medium',
       merged.startDate ?? null,
       merged.endDate ?? null,
+      merged.category_id ?? null,
       merged.updatedAt,
       merged.completed ? 1 : 0,
       merged.pomodoro_estimated ?? null,
@@ -86,7 +89,23 @@ export async function deleteTask(id: string): Promise<void> {
 }
 
 export async function setTaskCompletion(id: string, completed: boolean): Promise<void> {
-  await executeSqlAsync('UPDATE tasks SET completed = ?, updatedAt = ? WHERE id = ?', [completed ? 1 : 0, new Date().toISOString(), id]);
+  const task = await getTaskById(id);
+  if (!task) return;
+
+  if (completed) {
+    // When completing a task, move it to the Completed category
+    await executeSqlAsync(
+      'UPDATE tasks SET completed = ?, category_id = ?, updatedAt = ? WHERE id = ?',
+      [1, 'cat_completed', new Date().toISOString(), id]
+    );
+  } else {
+    // When uncompleting a task, restore it to Personal category (default)
+    // You could store the previous category if needed
+    await executeSqlAsync(
+      'UPDATE tasks SET completed = ?, category_id = ?, updatedAt = ? WHERE id = ?',
+      [0, 'cat_personal', new Date().toISOString(), id]
+    );
+  }
 }
 
 export async function incrementPomodoroCompleted(id: string, completedCount: number): Promise<void> {

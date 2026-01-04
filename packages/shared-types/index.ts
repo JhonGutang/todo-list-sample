@@ -1,12 +1,22 @@
 export type Priority = 'low' | 'medium' | 'high';
 
+export interface Category {
+  id: string;
+  name: string;
+  color?: string | null;
+  isDefault?: boolean;
+  createdAt?: string | null;
+}
+
 export interface Task {
   id: string;
   name: string;
   description?: string | null;
   priority?: Priority;
+  /** @deprecated Use endDate instead. Kept for backward compatibility. */
   startDate?: string | null;
   endDate?: string | null;
+  category_id?: string | null;
   createdAt?: string;
   updatedAt?: string | null;
   completed?: boolean;
@@ -18,7 +28,6 @@ export interface Subtask {
   id: string;
   task_id: string;
   title: string;
-  description?: string | null;
   completed?: boolean;
   order?: number | null;
 }
@@ -36,6 +45,13 @@ export interface Tag {
  */
 export type TaskWithSubtasks = Task & {
   subtasks: Subtask[];
+};
+
+/**
+ * Helper type for components that need a task with its category details
+ */
+export type TaskWithCategory = Task & {
+  category?: Category | null;
 };
 
 // Pomodoro Types

@@ -4,13 +4,12 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 type Props = {
   id: string;
   title: string;
-  description?: string;
   completed?: boolean;
   onToggle?: (id: string) => void;
   onEdit?: (id: string) => void;
 };
 
-export default function SubtaskItem({ id, title, description, completed, onToggle, onEdit }: Props) {
+export default function SubtaskItem({ id, title, completed, onToggle, onEdit }: Props) {
   return (
     <View style={styles.row}>
       <Pressable style={styles.left} onPress={() => onToggle?.(id)}>
@@ -19,7 +18,6 @@ export default function SubtaskItem({ id, title, description, completed, onToggl
         </View>
         <View style={styles.texts}>
           <Text style={[styles.title, completed ? styles.completedText : null]}>{title}</Text>
-          {description ? <Text style={styles.desc}>{description}</Text> : null}
         </View>
       </Pressable>
 
@@ -38,7 +36,6 @@ const styles = StyleSheet.create({
   checkMark: { color: '#fff', fontWeight: '700' },
   texts: { flex: 1 },
   title: { fontSize: 15, fontWeight: '600' },
-  desc: { color: '#666', fontSize: 13 },
   completedText: { textDecorationLine: 'line-through', color: '#888' },
   more: { paddingHorizontal: 12, paddingVertical: 6 },
   moreText: { fontSize: 20, color: '#666' },

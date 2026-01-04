@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useImperativeHandle, forwardRef } from 'react';
 import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 
@@ -8,15 +8,19 @@ type Props = {
   placeholder?: string;
 };
 
-export default function DateInput({ value, onChange, placeholder = 'Set date' }: Props) {
+const DateInput = forwardRef(({ value, onChange, placeholder = 'Set date' }: Props, ref) => {
   const [show, setShow] = useState(false);
+
+  useImperativeHandle(ref, () => ({
+    openPicker: () => setShow(true),
+  }));
 
   const handleConfirm = (date: Date) => {
     setShow(false);
     onChange(date.toISOString());
   };
 
-  const display = value ? new Date(value).toLocaleString() : placeholder;
+  const display = value ? new Date(value).toLocaleDateString() : placeholder;
 
   return (
     <View>
@@ -26,13 +30,15 @@ export default function DateInput({ value, onChange, placeholder = 'Set date' }:
 
       <DateTimePickerModal
         isVisible={show}
-        mode="datetime"
+        mode="date"
         onConfirm={handleConfirm}
         onCancel={() => setShow(false)}
       />
     </View>
   );
-}
+});
+
+export default DateInput;
 
 const styles = StyleSheet.create({
   button: { paddingVertical: 10, paddingHorizontal: 12, borderWidth: 1, borderColor: '#ddd', borderRadius: 8 },
