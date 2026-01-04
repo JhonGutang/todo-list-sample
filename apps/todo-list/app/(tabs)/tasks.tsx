@@ -57,7 +57,10 @@ export default function TasksPage() {
   const filteredTasks = tasksWithSubtasks
     .filter((task) => {
       // Category filter
-      if (filter === 'all') return true;
+      if (filter === 'all') {
+        // Exclude completed tasks from "All" view
+        return task.category_id !== 'cat_completed';
+      }
       return task.category_id === filter;
     })
     .filter((task) => {
