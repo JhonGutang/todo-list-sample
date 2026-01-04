@@ -88,3 +88,10 @@ export async function deleteTask(id: string): Promise<void> {
 export async function setTaskCompletion(id: string, completed: boolean): Promise<void> {
   await executeSqlAsync('UPDATE tasks SET completed = ?, updatedAt = ? WHERE id = ?', [completed ? 1 : 0, new Date().toISOString(), id]);
 }
+
+export async function incrementPomodoroCompleted(id: string, completedCount: number): Promise<void> {
+  await executeSqlAsync(
+    'UPDATE tasks SET pomodoro_completed = ?, completed = 1, updatedAt = ? WHERE id = ?',
+    [completedCount, new Date().toISOString(), id]
+  );
+}

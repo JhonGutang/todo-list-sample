@@ -1,6 +1,8 @@
 import { Stack } from "expo-router";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { StyleSheet, useColorScheme } from "react-native";
+import { TimerProvider } from "@/contexts/TimerContext";
+import { PomodoroProvider } from "@/contexts/PomodoroContext";
 
 export default function RootLayout() {
   const scheme = useColorScheme();
@@ -8,16 +10,20 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView edges={["top"]} style={[styles.container, { backgroundColor }]}> 
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            animation: 'slide_from_right',
-            gestureEnabled: true,
-            contentStyle: { backgroundColor },
-          }}
-        />
-      </SafeAreaView>
+      <TimerProvider>
+        <PomodoroProvider>
+          <SafeAreaView edges={["top", "left", "right"]} style={[styles.container, { backgroundColor }]}>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                animation: 'slide_from_right',
+                gestureEnabled: true,
+                contentStyle: { backgroundColor },
+              }}
+            />
+          </SafeAreaView>
+        </PomodoroProvider>
+      </TimerProvider>
     </SafeAreaProvider>
   );
 }

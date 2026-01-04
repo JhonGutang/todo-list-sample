@@ -14,7 +14,7 @@ A small, project-based React Native app built with Expo to practice core concept
 - Add, edit and view tasks
 - Subtasks and due dates
 - Tags and chips for filtering
-- Pomodoro timer and settings screen
+- Pomodoro timer with Focus and Task modes ([Use Guide](../../docs/data/pomodoro.md))
 
 **Project layout (key paths)**
 - `app/` — file-based routes and screens

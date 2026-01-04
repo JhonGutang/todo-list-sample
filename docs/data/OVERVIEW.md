@@ -25,6 +25,10 @@ Files in this folder:
 - `tags.md` — Tag schema
 - `chips.md` — UI chips and filter config
 - `settings.md` — Persisted app settings the frontend reads/writes
+- `pomodoro.md` — Pomodoro timer feature data schemas, user flows, and API integration
+- `pomodoro-components.md` — Pomodoro component architecture and implementation details
+- `pomodoro-examples.md` — Complete Pomodoro data flow examples and API payloads
+- `pomodoro-quick-reference.md` — Cheat sheet for developers
 - `examples.md` — Full example payloads combining the above
 
 If you want these docs exported to another format or integrated into the backend API spec, tell me where to place the output.

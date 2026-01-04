@@ -2,14 +2,19 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import CircularTimer from '@/components/pomodoro/CircularTimer';
+import TaskSelector from '@/components/pomodoro/TaskSelector';
+import SessionDisplay from '@/components/pomodoro/SessionDisplay';
 import { useNavigation } from '@react-navigation/native';
 import { useTimer } from '@/contexts/TimerContext';
+import { usePomodoro } from '@/contexts/PomodoroContext';
+import { PomodoroConfig } from '@todolist/shared-types';
 
 type TimerMode = 'focus' | 'task';
 
 export default function PomodoroTimerPage() {
     const [mode, setMode] = useState<TimerMode>('focus');
     const { isTimerRunning, setTimerRunning } = useTimer();
+    const { session, startSession, cancelSession, isLoading } = usePomodoro();
     const navigation = useNavigation();
     const isTimerRunningRef = React.useRef(isTimerRunning);
 
@@ -73,6 +78,26 @@ export default function PomodoroTimerPage() {
         setMode(newMode);
     };
 
+    const handleStartSession = async (taskId: string, config: PomodoroConfig) => {
+        try {
+            await startSession(taskId, config);
+        } catch (error) {
+            console.error('Failed to start session:', error);
+            Alert.alert('Error', 'Failed to start Pomodoro session');
+        }
+    };
+
+    const handleCancelSession = async () => {
+        // Reset timer running state first to allow navigation after cancel
+        setTimerRunning(false);
+        isTimerRunningRef.current = false;
+        await cancelSession();
+    };
+
+    // Show task mode if there's an active session
+    const hasActiveSession = session !== null;
+    const effectiveMode = hasActiveSession ? 'task' : mode;
+
     return (
         <View style={styles.container}>
             {/* Tab Navigation */}
@@ -80,23 +105,23 @@ export default function PomodoroTimerPage() {
                 <TouchableOpacity
                     style={[
                         styles.tab,
-                        mode === 'focus' && styles.tabActive,
-                        isTimerRunning && mode !== 'focus' && styles.tabDisabled
+                        effectiveMode === 'focus' && styles.tabActive,
+                        (isTimerRunning || hasActiveSession) && effectiveMode !== 'focus' && styles.tabDisabled
                     ]}
                     onPress={() => handleModeSwitch('focus')}
                     accessibilityLabel="Focus Timer"
-                    disabled={isTimerRunning && mode !== 'focus'}
+                    disabled={(isTimerRunning || hasActiveSession) && effectiveMode !== 'focus'}
                 >
                     <FontAwesome
                         name="clock-o"
                         size={18}
-                        color={mode === 'focus' ? '#fff' : isTimerRunning ? '#ccc' : '#666'}
+                        color={effectiveMode === 'focus' ? '#fff' : (isTimerRunning || hasActiveSession) ? '#ccc' : '#666'}
                         style={styles.tabIcon}
                     />
                     <Text style={[
                         styles.tabText,
-                        mode === 'focus' && styles.tabTextActive,
-                        isTimerRunning && mode !== 'focus' && styles.tabTextDisabled
+                        effectiveMode === 'focus' && styles.tabTextActive,
+                        (isTimerRunning || hasActiveSession) && effectiveMode !== 'focus' && styles.tabTextDisabled
                     ]}>
                         Focus Timer
                     </Text>
@@ -105,35 +130,61 @@ export default function PomodoroTimerPage() {
                 <TouchableOpacity
                     style={[
                         styles.tab,
-                        mode === 'task' && styles.tabActive,
-                        isTimerRunning && mode !== 'task' && styles.tabDisabled
+                        effectiveMode === 'task' && styles.tabActive,
+                        (isTimerRunning || hasActiveSession) && effectiveMode !== 'task' && styles.tabDisabled
                     ]}
                     onPress={() => handleModeSwitch('task')}
                     accessibilityLabel="Task Timer"
-                    disabled={isTimerRunning && mode !== 'task'}
+                    disabled={(isTimerRunning || hasActiveSession) && effectiveMode !== 'task'}
                 >
                     <FontAwesome
                         name="tasks"
                         size={18}
-                        color={mode === 'task' ? '#fff' : isTimerRunning ? '#ccc' : '#666'}
+                        color={effectiveMode === 'task' ? '#fff' : (isTimerRunning || hasActiveSession) ? '#ccc' : '#666'}
                         style={styles.tabIcon}
                     />
                     <Text style={[
                         styles.tabText,
-                        mode === 'task' && styles.tabTextActive,
-                        isTimerRunning && mode !== 'task' && styles.tabTextDisabled
+                        effectiveMode === 'task' && styles.tabTextActive,
+                        (isTimerRunning || hasActiveSession) && effectiveMode !== 'task' && styles.tabTextDisabled
                     ]}>
                         Task Timer
                     </Text>
                 </TouchableOpacity>
             </View>
 
-            {/* Timer Component */}
-            <CircularTimer
-                mode={mode}
-                onTimerComplete={handleTimerComplete}
-                onRunningStateChange={handleRunningStateChange}
-            />
+            {/* Content */}
+            {effectiveMode === 'focus' ? (
+                <View style={styles.focusContent}>
+                    <CircularTimer
+                        mode="focus"
+                        onTimerComplete={handleTimerComplete}
+                        onRunningStateChange={handleRunningStateChange}
+                    />
+                </View>
+            ) : (
+                <>
+                    {hasActiveSession ? (
+                        <View style={styles.activeSessionContent}>
+                            {/* Timer at Top */}
+                            <View style={styles.timerSection}>
+                                <CircularTimer
+                                    mode="task"
+                                    onTimerComplete={handleTimerComplete}
+                                    onRunningStateChange={handleRunningStateChange}
+                                />
+                            </View>
+                            {/* Session Info at Bottom */}
+                            <SessionDisplay
+                                session={session}
+                                onCancel={handleCancelSession}
+                            />
+                        </View>
+                    ) : (
+                        <TaskSelector onStartSession={handleStartSession} />
+                    )}
+                </>
+            )}
         </View>
     );
 }
@@ -141,8 +192,21 @@ export default function PomodoroTimerPage() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 20,
         backgroundColor: '#fafafa',
+        paddingTop: 16,
+    },
+    focusContent: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    activeSessionContent: {
+        flex: 1,
+        justifyContent: 'space-between',
+    },
+    timerSection: {
+        flex: 1,
+        justifyContent: 'center',
         alignItems: 'center',
     },
 
@@ -152,13 +216,13 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderRadius: 16,
         padding: 4,
-        marginTop: 20,
         marginBottom: 16,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
         shadowRadius: 8,
         elevation: 2,
+        alignSelf: 'center',
     },
     tab: {
         flexDirection: 'row',
@@ -195,4 +259,5 @@ const styles = StyleSheet.create({
         color: '#ccc',
     },
 });
+
 

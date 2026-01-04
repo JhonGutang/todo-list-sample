@@ -25,7 +25,7 @@ export default function TasksPage() {
       await initDb();
       const loadedTasks = await getAllTasks();
       setTasks(loadedTasks);
-      
+
       // Load subtasks for each task
       const tasksWithSubs = await Promise.all(
         loadedTasks.map(async (task) => {
@@ -92,7 +92,17 @@ export default function TasksPage() {
         })}
       </View>
 
-      <FlatList data={filteredTasks} keyExtractor={(item) => item.id} renderItem={renderItem} contentContainerStyle={styles.list} />
+      <FlatList
+        data={filteredTasks}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        contentContainerStyle={[styles.list, filteredTasks.length === 0 && { flex: 1 }]}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>No tasks found. Create one to get started!</Text>
+          </View>
+        }
+      />
 
       <Pressable style={styles.fab} onPress={() => setModalVisible(true)}>
         <Text style={styles.fabText}>+</Text>
@@ -146,4 +156,15 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   fabText: { color: '#fff', fontSize: 28, lineHeight: 28 },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 80,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#888',
+    textAlign: 'center',
+  },
 });

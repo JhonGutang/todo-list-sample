@@ -1,12 +1,12 @@
 import { executeSqlAsync, getDb } from '../storage/db';
 import { migrations } from '../storage/migrations';
-import { seedIfEmpty } from '../storage/seed';
+// import { seedIfEmpty } from '../storage/seed';
 
 let initialized = false;
 
 async function applyMigrations() {
   const db = await getDb();
-  
+
   for (const m of migrations) {
     let applied = false;
     try {
@@ -22,7 +22,7 @@ async function applyMigrations() {
     // Use execAsync to execute the entire migration SQL (handles multiple statements)
     // Remove BEGIN TRANSACTION and COMMIT as withTransactionAsync handles that
     const sql = m.sql.replace(/BEGIN TRANSACTION;?\s*/i, '').replace(/COMMIT;?\s*/i, '').trim();
-    
+
     try {
       await db.withTransactionAsync(async () => {
         await db.execAsync(sql);
@@ -42,7 +42,7 @@ export async function initDb() {
   initialized = true;
   try {
     await applyMigrations();
-    await seedIfEmpty();
+    // await seedIfEmpty();
   } catch (e) {
     console.warn('DB init error', e);
     throw e;
@@ -50,7 +50,7 @@ export async function initDb() {
 }
 
 // auto-init on import (safe to call multiple times)
-initDb().catch(() => {});
+initDb().catch(() => { });
 
 export * from '@todolist/shared-types';
 export * from './settings';

@@ -66,6 +66,32 @@ CREATE TABLE IF NOT EXISTS migrations (
 
 COMMIT;
 `
+  },
+  {
+    name: '002_create_pomodoro_sessions.sql',
+    sql: `
+BEGIN TRANSACTION;
+
+CREATE TABLE IF NOT EXISTS pomodoro_sessions (
+  id TEXT PRIMARY KEY,
+  task_id TEXT NOT NULL,
+  work_duration_minutes INTEGER NOT NULL,
+  break_type TEXT CHECK (break_type IN ('short','long')) NOT NULL,
+  total_iterations INTEGER NOT NULL,
+  current_iteration INTEGER NOT NULL DEFAULT 1,
+  current_subtask_index INTEGER,
+  timer_type TEXT CHECK (timer_type IN ('work','shortBreak','longBreak')) NOT NULL DEFAULT 'work',
+  remaining_seconds INTEGER NOT NULL,
+  is_paused INTEGER NOT NULL DEFAULT 0,
+  started_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_pomodoro_sessions_task_id ON pomodoro_sessions(task_id);
+
+COMMIT;
+`
   }
 ];
 
