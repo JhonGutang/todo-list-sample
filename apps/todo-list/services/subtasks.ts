@@ -1,5 +1,5 @@
-import { executeSqlAsync } from './db';
 import { Subtask } from '@todolist/shared-types';
+import { executeSqlAsync } from '../storage/db';
 
 function rowToSubtask(row: any): Subtask {
   return {

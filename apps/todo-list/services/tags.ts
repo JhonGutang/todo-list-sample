@@ -1,5 +1,5 @@
-import { executeSqlAsync, transactionAsync } from './db';
 import { Tag } from '@todolist/shared-types';
+import { executeSqlAsync, transactionAsync } from '../storage/db';
 
 function rowToTag(row: any): Tag {
   return {

@@ -1,7 +1,7 @@
-import { executeSqlAsync, transactionAsync } from './db';
+import { Subtask as DBSubtask, Task as DBTask } from '@todolist/shared-types';
 import mockTasks, { mockSubtasks } from '../constants/mockTasks';
 import mockTags from '../constants/tags';
-import { Task as DBTask, Subtask as DBSubtask } from '@todolist/shared-types';
+import { executeSqlAsync, transactionAsync } from '../storage/db';
 
 function generateId() {
   return Date.now().toString() + Math.random().toString(36).slice(2, 8);

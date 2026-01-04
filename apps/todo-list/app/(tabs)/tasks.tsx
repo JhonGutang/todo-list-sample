@@ -1,15 +1,15 @@
-import React, { useState, useCallback } from 'react';
-import { Text, View, FlatList, StyleSheet, Pressable } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Task, TaskWithSubtasks } from '@todolist/shared-types';
-import { CHIPS, FILTER_CHIPS } from '../../constants/chips';
-import useDateFormatter from '../../hooks/useDateFormatter';
+import { useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import Chip from '../../components/Chip';
 import TaskModal from '../../components/TaskModal';
-import { useRouter } from 'expo-router';
-import { getAllTasks, createTask } from '../../services/tasks';
-import { getSubtasksForTask } from '../../services/subtasks';
+import { CHIPS, FILTER_CHIPS } from '../../constants/chips';
+import useDateFormatter from '../../hooks/useDateFormatter';
 import { initDb } from '../../services';
+import { getSubtasksForTask } from '../../services/subtasks';
+import { createTask, getAllTasks } from '../../services/tasks';
 
 export default function TasksPage() {
   const router = useRouter();
@@ -103,8 +103,8 @@ export default function TasksPage() {
         onClose={() => setModalVisible(false)}
         onCreate={async (task) => {
           try {
-            const created = await createTask(task);
-            await loadTasks(); // Reload to get the new task with subtasks
+            await createTask(task);
+            await loadTasks();
           } catch (error) {
             console.error('Failed to create task:', error);
           }
@@ -127,9 +127,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   badge: { paddingVertical: 4, paddingHorizontal: 8, borderRadius: 12 },
   badgeText: { color: '#fff', fontWeight: '600', textTransform: 'capitalize' },
-  high: { backgroundColor: '#e74c3c' },
-  medium: { backgroundColor: '#f39c12' },
-  low: { backgroundColor: '#2ecc71' },
   dates: { color: '#666', fontSize: 12 },
   subtaskCorner: { position: 'absolute', right: 12, top: 12, backgroundColor: '#eef6ff', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, zIndex: 5 },
   subtaskText: { color: '#007bff', fontWeight: '700', fontSize: 12 },

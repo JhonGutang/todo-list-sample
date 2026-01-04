@@ -1,6 +1,6 @@
-import { migrations } from './migrations';
-import { executeSqlAsync, getDb } from './db';
-import { seedIfEmpty } from './seed';
+import { executeSqlAsync, getDb } from '../storage/db';
+import { migrations } from '../storage/migrations';
+import { seedIfEmpty } from '../storage/seed';
 
 let initialized = false;
 
@@ -52,8 +52,9 @@ export async function initDb() {
 // auto-init on import (safe to call multiple times)
 initDb().catch(() => {});
 
-export * from './tasks';
+export * from '@todolist/shared-types';
+export * from './settings';
 export * from './subtasks';
 export * from './tags';
-export * from './settings';
-export * from '@todolist/shared-types';
+export * from './tasks';
+

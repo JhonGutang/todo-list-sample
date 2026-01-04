@@ -1,4 +1,4 @@
-import { executeSqlAsync } from './db';
+import { executeSqlAsync } from '../storage/db';
 
 export async function getSetting(key: string): Promise<string | null> {
   const res = await executeSqlAsync('SELECT value FROM settings WHERE key = ? LIMIT 1', [key]);
