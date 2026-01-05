@@ -13,6 +13,7 @@ import {
   Platform,
 } from 'react-native';
 import { Task, Category } from '@todolist/shared-types';
+import { Ionicons } from '@expo/vector-icons';
 import DateInput from '../DateInput';
 import CategorySelector from '../CategorySelector';
 import PrioritySelector from '../PrioritySelector';
@@ -30,7 +31,7 @@ export default function TaskModal({ visible, onClose, onCreate }: Props) {
   const [endDate, setEndDate] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [categoryId, setCategoryId] = useState<string>('cat_personal');
-  const [subtasks, setSubtasks] = useState<string[]>(['']);
+  const [subtasks, setSubtasks] = useState<string[]>([]);
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [showCategorySelector, setShowCategorySelector] = useState(false);
@@ -78,7 +79,7 @@ export default function TaskModal({ visible, onClose, onCreate }: Props) {
     setEndDate('');
     setPriority('medium');
     setCategoryId('cat_personal');
-    setSubtasks(['']);
+    setSubtasks([]);
     setShowSubtasks(false);
   };
 
@@ -125,8 +126,27 @@ export default function TaskModal({ visible, onClose, onCreate }: Props) {
     setSubtasks(updated);
   };
 
+  const toggleSubtasksSection = () => {
+    if (showSubtasks) {
+      // Hide subtasks section
+      setShowSubtasks(false);
+      setSubtasks([]);
+    } else {
+      // Show subtasks section with 1 default subtask
+      setShowSubtasks(true);
+      setSubtasks(['']);
+    }
+  };
+
   const removeSubtask = (index: number) => {
-    setSubtasks(subtasks.filter((_, i) => i !== index));
+    const updated = subtasks.filter((_, i) => i !== index);
+    // If no subtasks left, hide the section
+    if (updated.length === 0) {
+      setShowSubtasks(false);
+      setSubtasks([]);
+    } else {
+      setSubtasks(updated);
+    }
   };
 
   if (!isMounted) return null;
@@ -148,7 +168,7 @@ export default function TaskModal({ visible, onClose, onCreate }: Props) {
           <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]} />
 
           <Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
-            <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+            <View style={styles.content}>
               <Text style={styles.title}>Create Task</Text>
 
               <TextInput
@@ -163,95 +183,105 @@ export default function TaskModal({ visible, onClose, onCreate }: Props) {
               <TextInput
                 value={description}
                 onChangeText={setDescription}
-                style={[styles.inputDescription]}
+                style={styles.inputDescription}
                 placeholder="Description (optional)"
                 multiline
+                numberOfLines={4}
                 placeholderTextColor="#999"
               />
 
               {showSubtasks && (
                 <View style={styles.subtasksSection}>
-                  <Text style={styles.sectionLabel}>Subtasks</Text>
-                  <ScrollView style={styles.subtasksScroll} nestedScrollEnabled>
-                    {subtasks.map((subtask, index) => (
-                      <View key={index} style={styles.subtaskRow}>
+                  <View style={styles.subtasksHeader}>
+                    <Text style={styles.sectionLabel}>Subtasks</Text>
+                    <TouchableOpacity onPress={addSubtask}>
+                      <Text style={styles.addSubtaskText}>+ Add subtask</Text>
+                    </TouchableOpacity>
+                  </View>
+                  {subtasks.map((subtask, index) => (
+                    <View key={index} style={styles.subtaskRow}>
+                      <TouchableOpacity onPress={() => removeSubtask(index)}>
                         <View style={styles.radioButton} />
-                        <TextInput
-                          value={subtask}
-                          onChangeText={(val) => updateSubtask(index, val)}
-                          style={styles.subtaskInput}
-                          placeholder={`Subtask ${index + 1}`}
-                          placeholderTextColor="#999"
-                        />
-                        {subtasks.length > 1 && (
-                          <TouchableOpacity onPress={() => removeSubtask(index)}>
-                            <Text style={styles.removeButton}>✕</Text>
-                          </TouchableOpacity>
-                        )}
-                      </View>
-                    ))}
-                  </ScrollView>
-                  <TouchableOpacity onPress={addSubtask} style={styles.addSubtaskButton}>
-                    <Text style={styles.addSubtaskText}>+ Add subtask</Text>
-                  </TouchableOpacity>
+                      </TouchableOpacity>
+                      <TextInput
+                        value={subtask}
+                        onChangeText={(val) => updateSubtask(index, val)}
+                        style={styles.subtaskText}
+                        placeholder={`Subtask ${index + 1}`}
+                        placeholderTextColor="#999"
+                      />
+                      <TouchableOpacity onPress={() => removeSubtask(index)} style={styles.removeButtonContainer}>
+                        <Text style={styles.removeButton}>✕</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
                 </View>
               )}
-            </ScrollView>
 
-            {/* Sticky Bottom Toolbar */}
-            <View style={styles.toolbar}>
-              <TouchableOpacity
-                style={[styles.toolbarChip, { backgroundColor: selectedCategory?.color || '#e0e0e0' }]}
-                onPress={() => setShowCategorySelector(true)}
-              >
-                <Text style={styles.toolbarChipText}>{selectedCategory?.name || 'Category'}</Text>
-              </TouchableOpacity>
+              {/* Toolbar with chips */}
+              <View style={styles.toolbar}>
+                <TouchableOpacity
+                  style={[styles.toolbarChip, { backgroundColor: selectedCategory?.color || '#8B5CF6' }]}
+                  onPress={() => setShowCategorySelector(true)}
+                >
+                  <Ionicons name="briefcase" size={16} color="#fff" />
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.toolbarChip, { backgroundColor: showSubtasks ? '#007bff' : '#e0e0e0' }]}
-                onPress={() => setShowSubtasks(!showSubtasks)}
-              >
-                <Text style={[styles.toolbarChipText, showSubtasks && styles.toolbarChipTextActive]}>
-                  Subtasks
-                </Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.toolbarChip,
+                    subtasks.some((s) => s.trim().length > 0)
+                      ? styles.toolbarChipHighlighted
+                      : styles.toolbarChipSecondary,
+                  ]}
+                  onPress={toggleSubtasksSection}
+                >
+                  <Ionicons
+                    name="list"
+                    size={16}
+                    color={subtasks.some((s) => s.trim().length > 0) ? '#fff' : '#666'}
+                  />
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.toolbarChip, { backgroundColor: getPriorityColor(priority) }]}
-                onPress={() => setShowPrioritySelector(true)}
-              >
-                <Text style={styles.toolbarChipText}>{priority.charAt(0).toUpperCase() + priority.slice(1)}</Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.toolbarChip, { backgroundColor: getPriorityColor(priority) }]}
+                  onPress={() => setShowPrioritySelector(true)}
+                >
+                  <Ionicons name="flag" size={16} color="#fff" />
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.toolbarChip, { backgroundColor: endDate ? '#007bff' : '#e0e0e0' }]}
-                onPress={() => dateInputRef.current?.openPicker()}
-              >
-                <Text style={[styles.toolbarChipText, endDate && styles.toolbarChipTextActive]}>
-                  {endDate ? 'Set' : 'Deadline'}
-                </Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.toolbarChip, styles.toolbarChipDate]}
+                  onPress={() => dateInputRef.current?.openPicker()}
+                >
+                  <Ionicons name="calendar-outline" size={16} color="#666" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Action Buttons */}
+              <View style={styles.actionsRow}>
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.cancel]}
+                  onPress={() => {
+                    reset();
+                    onClose();
+                  }}
+                >
+                  <Text style={styles.cancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionButton, styles.create]}
+                  onPress={handleCreate}
+                  disabled={!name.trim()}
+                >
+                  <Text style={styles.createText}>Create</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
             {/* Hidden DateInput for deadline */}
             <View style={{ height: 0, overflow: 'hidden' }}>
               <DateInput ref={dateInputRef} value={endDate} onChange={(iso) => setEndDate(iso ?? '')} />
-            </View>
-
-            {/* Action Buttons */}
-            <View style={styles.actionsRow}>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.cancel]}
-                onPress={() => {
-                  reset();
-                  onClose();
-                }}
-              >
-                <Text style={styles.cancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.actionButton, styles.create]} onPress={handleCreate}>
-                <Text style={styles.createText}>Create</Text>
-              </TouchableOpacity>
             </View>
           </Animated.View>
         </View>
@@ -276,6 +306,12 @@ export default function TaskModal({ visible, onClose, onCreate }: Props) {
   );
 }
 
+function formatDate(isoString: string): string {
+  const date = new Date(isoString);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${months[date.getMonth()]} ${date.getDate()}`;
+}
+
 function getPriorityColor(priority: 'low' | 'medium' | 'high'): string {
   switch (priority) {
     case 'low':
@@ -295,7 +331,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   sheet: {
     position: 'absolute',
@@ -303,127 +339,159 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     backgroundColor: '#fff',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     maxHeight: '85%',
   },
-  content: { padding: 20, paddingBottom: 20 },
-  title: { fontSize: 20, fontWeight: '700', marginBottom: 16, color: '#111' },
+  content: {
+    padding: 32,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#000',
+    marginBottom: 24,
+  },
   inputTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    borderBottomWidth: 2,
-    borderBottomColor: '#007bff',
-    paddingVertical: 8,
-    marginBottom: 12,
-    color: '#111',
+    fontSize: 15,
+    fontWeight: '400',
+    backgroundColor: '#F5F5F5',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    color: '#000',
+    borderWidth: 0,
   },
   inputDescription: {
     fontSize: 15,
-    minHeight: 60,
+    fontWeight: '400',
+    minHeight: 100,
     textAlignVertical: 'top',
-    borderWidth: 1,
-    borderColor: '#ddd',
+    backgroundColor: '#F5F5F5',
     borderRadius: 8,
-    padding: 10,
-    marginBottom: 12,
-    color: '#111',
+    padding: 16,
+    marginBottom: 24,
+    color: '#000',
+    borderWidth: 0,
+  },
+  toolbar: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 24,
+  },
+  toolbarChip: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 44,
+  },
+  toolbarChipSecondary: {
+    backgroundColor: '#E8E8E8',
+  },
+  toolbarChipHighlighted: {
+    backgroundColor: '#007bff',
+  },
+  toolbarChipDate: {
+    backgroundColor: '#F5F5F5',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  toolbarChipText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  toolbarChipTextSecondary: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+  },
+  toolbarChipTextDate: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#666',
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancel: {
+    backgroundColor: '#4A90E2',
+  },
+  create: {
+    backgroundColor: '#9CA3AF',
+  },
+  cancelText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  createText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 16,
   },
   subtasksSection: {
-    marginTop: 8,
+    marginTop: 16,
     marginBottom: 8,
   },
-  subtasksScroll: {
-    maxHeight: 200,
+  subtasksHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
   },
   sectionLabel: {
     fontSize: 14,
     fontWeight: '600',
-    marginBottom: 8,
-    color: '#555',
+    color: '#000',
   },
   subtaskRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   radioButton: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#007bff',
-    marginRight: 8,
+    borderColor: '#666',
+    marginRight: 12,
+    backgroundColor: 'transparent',
   },
-  subtaskInput: {
+  subtaskText: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 6,
-    padding: 8,
-    fontSize: 14,
-    color: '#111',
+    fontSize: 15,
+    color: '#000',
+    padding: 0,
+    borderWidth: 0,
+    backgroundColor: 'transparent',
+  },
+  removeButtonContainer: {
+    padding: 4,
   },
   removeButton: {
-    marginLeft: 8,
     fontSize: 18,
     color: '#e74c3c',
-    fontWeight: 'bold',
-  },
-  hiddenSubtasksText: {
-    fontSize: 13,
-    color: '#666',
-    fontStyle: 'italic',
-    marginTop: 4,
-    marginLeft: 26,
-  },
-  addSubtaskButton: {
-    marginTop: 8,
-    marginLeft: 26,
+    fontWeight: '600',
   },
   addSubtaskText: {
     fontSize: 14,
     color: '#007bff',
     fontWeight: '600',
   },
-  toolbar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    backgroundColor: '#fff',
-    gap: 8,
-  },
-  toolbarChip: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  toolbarChipText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  toolbarChipTextActive: {
-    color: '#fff',
-  },
-  actionsRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
-    backgroundColor: '#fff',
-  },
-  actionButton: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 8, marginLeft: 8 },
-  cancel: { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#ddd' },
-  create: { backgroundColor: '#007bff' },
-  cancelText: { color: '#333', fontWeight: '600' },
-  createText: { color: '#fff', fontWeight: '700' },
 });

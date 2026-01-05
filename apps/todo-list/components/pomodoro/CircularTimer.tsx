@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, Vibration, Animated } 
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import Svg, { Circle } from 'react-native-svg';
 import { usePomodoro } from '@/contexts/PomodoroContext';
+import Colors from '@/constants/Colors';
 
 interface CircularTimerProps {
     mode: 'focus' | 'task';
@@ -133,9 +134,9 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
     const minutes = Math.floor(displayRemaining / 60);
     const seconds = displayRemaining % 60;
 
-    // Circle progress calculation
-    const circleSize = 280;
-    const strokeWidth = 12;
+    // Circle progress calculation - Larger size for focus mode
+    const circleSize = mode === 'focus' && !isTaskMode ? 280 : 280;
+    const strokeWidth = mode === 'focus' && !isTaskMode ? 8 : 12;
     const radius = (circleSize - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
     const progress = displayTotal > 0 ? (displayTotal - displayRemaining) / displayTotal : 0;
@@ -149,109 +150,155 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
 
     return (
         <View style={styles.container}>
-            {/* Mode Description */}
-            <Text style={styles.modeDescription}>
-                {mode === 'focus'
-                    ? 'Focus on your work without distractions'
-                    : isTaskMode
-                        ? `${session?.timer_type === 'work' ? 'Work Session' : session?.break_type === 'short' ? 'Short Break' : 'Long Break'}`
-                        : 'Select a task to start tracking'}
-            </Text>
+            {mode === 'focus' && !isTaskMode ? (
+                /* Focus Timer Layout */
+                <>
+                    {/* Preset Buttons at Top */}
+                    <View style={styles.presetsRow}>
+                        <TouchableOpacity
+                            style={[styles.preset, totalSeconds === 25 * 60 && styles.presetActive, isRunning && styles.presetDisabled]}
+                            onPress={() => setPreset(25)}
+                            accessibilityLabel="25 minutes"
+                            disabled={isRunning}
+                        >
+                            <Text style={[styles.presetText, totalSeconds === 25 * 60 && styles.presetTextActive, isRunning && styles.presetTextDisabled]}>25m</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.preset, totalSeconds === 15 * 60 && styles.presetActive, isRunning && styles.presetDisabled]}
+                            onPress={() => setPreset(15)}
+                            accessibilityLabel="15 minutes"
+                            disabled={isRunning}
+                        >
+                            <Text style={[styles.presetText, totalSeconds === 15 * 60 && styles.presetTextActive, isRunning && styles.presetTextDisabled]}>15m</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.preset, totalSeconds === 5 * 60 && styles.presetActive, isRunning && styles.presetDisabled]}
+                            onPress={() => setPreset(5)}
+                            accessibilityLabel="5 minutes"
+                            disabled={isRunning}
+                        >
+                            <Text style={[styles.presetText, totalSeconds === 5 * 60 && styles.presetTextActive, isRunning && styles.presetTextDisabled]}>5m</Text>
+                        </TouchableOpacity>
+                    </View>
 
-            {/* Circular Timer */}
-            <View style={styles.circularTimerContainer}>
-                <Svg width={circleSize} height={circleSize} style={styles.circularTimer}>
-                    {/* Background Circle */}
-                    <Circle
-                        cx={circleSize / 2}
-                        cy={circleSize / 2}
-                        r={radius}
-                        stroke="#f0f0f0"
-                        strokeWidth={strokeWidth}
-                        fill="none"
-                    />
-                    {/* Progress Circle */}
-                    <Circle
-                        cx={circleSize / 2}
-                        cy={circleSize / 2}
-                        r={radius}
-                        stroke="#6366f1"
-                        strokeWidth={strokeWidth}
-                        fill="none"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={strokeDashoffset}
-                        strokeLinecap="round"
-                        rotation="-90"
-                        origin={`${circleSize / 2}, ${circleSize / 2}`}
-                    />
-                </Svg>
+                    {/* Circular Timer */}
+                    <View style={styles.circularTimerContainer}>
+                        <Svg width={circleSize} height={circleSize} style={styles.circularTimer}>
+                            {/* Background Circle */}
+                            <Circle
+                                cx={circleSize / 2}
+                                cy={circleSize / 2}
+                                r={radius}
+                                stroke="#F0F0F5"
+                                strokeWidth={strokeWidth}
+                                fill="none"
+                            />
+                            {/* Progress Circle */}
+                            <Circle
+                                cx={circleSize / 2}
+                                cy={circleSize / 2}
+                                r={radius}
+                                stroke={Colors.primary}
+                                strokeWidth={strokeWidth}
+                                fill="none"
+                                strokeDasharray={circumference}
+                                strokeDashoffset={strokeDashoffset}
+                                strokeLinecap="round"
+                                rotation="-90"
+                                origin={`${circleSize / 2}, ${circleSize / 2}`}
+                            />
+                        </Svg>
 
-                {/* Timer Display */}
-                <View style={styles.timerTextContainer}>
-                    <Text style={styles.timerText}>
-                        {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+                        {/* Timer Display */}
+                        <View style={styles.timerTextContainer}>
+                            <Text style={styles.focusTimerText}>
+                                {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+                            </Text>
+                            <Text style={styles.focusLabel}>Focus</Text>
+                        </View>
+                    </View>
+
+                    {/* Control Buttons at Bottom */}
+                    <View style={styles.controlsRow}>
+                        <TouchableOpacity
+                            style={styles.iconButtonSecondary}
+                            onPress={reset}
+                            accessibilityLabel="Reset"
+                        >
+                            <FontAwesome name="rotate-right" size={24} color="#8E8E93" />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.iconButton, displayIsRunning && styles.pauseButton]}
+                            onPress={startPause}
+                            accessibilityLabel={displayIsRunning ? 'Pause' : 'Start'}
+                        >
+                            <FontAwesome name={displayIsRunning ? "pause" : "play"} size={28} color="white" style={{ marginLeft: displayIsRunning ? 0 : 3 }} />
+                        </TouchableOpacity>
+                    </View>
+                </>
+            ) : (
+                /* Task Mode Layout */
+                <>
+                    <Text style={styles.modeDescription}>
+                        {isTaskMode
+                            ? `${session?.timer_type === 'work' ? 'Work Session' : session?.break_type === 'short' ? 'Short Break' : 'Long Break'}`
+                            : 'Select a task to start tracking'}
                     </Text>
-                    {getProgressText() && (
-                        <Text style={styles.progressText}>{getProgressText()}</Text>
-                    )}
-                    <Text style={styles.timerLabel}>
-                        {displayIsRunning ? 'In Progress' : 'Paused'}
-                    </Text>
-                </View>
-            </View>
 
-            {/* Preset Buttons - Only show in focus mode */}
-            {!isTaskMode && (
-                <View style={styles.presetsRow}>
-                    <TouchableOpacity
-                        style={[styles.preset, totalSeconds === 25 * 60 && styles.presetActive, isRunning && styles.presetDisabled]}
-                        onPress={() => setPreset(25)}
-                        accessibilityLabel="25 minutes"
-                        disabled={isRunning}
-                    >
-                        <Text style={[styles.presetText, totalSeconds === 25 * 60 && styles.presetTextActive, isRunning && styles.presetTextDisabled]}>25</Text>
-                        <Text style={[styles.presetLabel, totalSeconds === 25 * 60 && styles.presetLabelActive, isRunning && styles.presetTextDisabled]}>min</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.preset, totalSeconds === 15 * 60 && styles.presetActive, isRunning && styles.presetDisabled]}
-                        onPress={() => setPreset(15)}
-                        accessibilityLabel="15 minutes"
-                        disabled={isRunning}
-                    >
-                        <Text style={[styles.presetText, totalSeconds === 15 * 60 && styles.presetTextActive, isRunning && styles.presetTextDisabled]}>15</Text>
-                        <Text style={[styles.presetLabel, totalSeconds === 15 * 60 && styles.presetLabelActive, isRunning && styles.presetTextDisabled]}>min</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.preset, totalSeconds === 5 * 60 && styles.presetActive, isRunning && styles.presetDisabled]}
-                        onPress={() => setPreset(5)}
-                        accessibilityLabel="5 minutes"
-                        disabled={isRunning}
-                    >
-                        <Text style={[styles.presetText, totalSeconds === 5 * 60 && styles.presetTextActive, isRunning && styles.presetTextDisabled]}>5</Text>
-                        <Text style={[styles.presetLabel, totalSeconds === 5 * 60 && styles.presetLabelActive, isRunning && styles.presetTextDisabled]}>min</Text>
-                    </TouchableOpacity>
-                </View>
+                    {/* Circular Timer */}
+                    <View style={styles.circularTimerContainer}>
+                        <Svg width={circleSize} height={circleSize} style={styles.circularTimer}>
+                            {/* Background Circle */}
+                            <Circle
+                                cx={circleSize / 2}
+                                cy={circleSize / 2}
+                                r={radius}
+                                stroke="#f0f0f0"
+                                strokeWidth={strokeWidth}
+                                fill="none"
+                            />
+                            {/* Progress Circle */}
+                            <Circle
+                                cx={circleSize / 2}
+                                cy={circleSize / 2}
+                                r={radius}
+                                stroke={Colors.primary}
+                                strokeWidth={strokeWidth}
+                                fill="none"
+                                strokeDasharray={circumference}
+                                strokeDashoffset={strokeDashoffset}
+                                strokeLinecap="round"
+                                rotation="-90"
+                                origin={`${circleSize / 2}, ${circleSize / 2}`}
+                            />
+                        </Svg>
+
+                        {/* Timer Display */}
+                        <View style={styles.timerTextContainer}>
+                            <Text style={styles.timerText}>
+                                {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+                            </Text>
+                            {getProgressText() && (
+                                <Text style={styles.progressText}>{getProgressText()}</Text>
+                            )}
+                            <Text style={styles.timerLabel}>
+                                {displayIsRunning ? 'In Progress' : 'Paused'}
+                            </Text>
+                        </View>
+                    </View>
+
+                    {/* Control Buttons */}
+                    <View style={styles.controlsRow}>
+                        <TouchableOpacity
+                            style={[styles.iconButton, displayIsRunning && styles.pauseButton]}
+                            onPress={startPause}
+                            accessibilityLabel={displayIsRunning ? 'Pause' : 'Start'}
+                        >
+                            <FontAwesome name={displayIsRunning ? "pause" : "play"} size={32} color="white" />
+                        </TouchableOpacity>
+                    </View>
+                </>
             )}
-
-            {/* Control Buttons */}
-            <View style={styles.controlsRow}>
-                <TouchableOpacity
-                    style={[styles.iconButton, displayIsRunning && styles.pauseButton]}
-                    onPress={startPause}
-                    accessibilityLabel={displayIsRunning ? 'Pause' : 'Start'}
-                >
-                    <FontAwesome name={displayIsRunning ? "pause" : "play"} size={28} color="white" />
-                </TouchableOpacity>
-                {!isTaskMode && (
-                    <TouchableOpacity
-                        style={styles.iconButtonSecondary}
-                        onPress={reset}
-                        accessibilityLabel="Reset"
-                    >
-                        <FontAwesome name="rotate-right" size={24} color="#666" />
-                    </TouchableOpacity>
-                )}
-            </View>
         </View>
     );
 }
@@ -263,13 +310,31 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
 
+    // Header Section (Focus Mode)
+    headerSection: {
+        alignItems: 'center',
+        marginBottom: 24,
+        marginTop: 8,
+    },
+    title: {
+        fontSize: 24,
+        fontWeight: '700',
+        color: '#1C1C1E',
+        marginBottom: 4,
+    },
+
     // Mode Description
     modeDescription: {
         fontSize: 14,
-        color: '#888',
+        color: Colors.textSecondary,
         marginBottom: 32,
         textAlign: 'center',
-        fontStyle: 'italic',
+        fontWeight: '500',
+    },
+    focusModeDescription: {
+        fontSize: 15,
+        marginBottom: 48,
+        fontWeight: '400',
     },
 
     // Circular Timer
@@ -290,74 +355,75 @@ const styles = StyleSheet.create({
     timerText: {
         fontSize: 56,
         fontWeight: '700',
-        color: '#1f2937',
+        color: Colors.textPrimary,
         letterSpacing: 2,
+    },
+    focusTimerText: {
+        fontSize: 64,
+        fontWeight: '700',
+        letterSpacing: -2,
+        color: '#1C1C1E',
     },
     progressText: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#6366f1',
+        color: Colors.primary,
         marginTop: 4,
     },
     timerLabel: {
         fontSize: 14,
-        color: '#9ca3af',
+        color: Colors.textSecondary,
         marginTop: 4,
         fontWeight: '500',
         textTransform: 'uppercase',
         letterSpacing: 1,
+    },
+    focusLabel: {
+        fontSize: 16,
+        color: '#8E8E93',
+        marginTop: 8,
+        fontWeight: '500',
     },
 
     // Presets
     presetsRow: {
         flexDirection: 'row',
         justifyContent: 'center',
-        marginBottom: 32,
+        marginBottom: 40,
         gap: 12,
     },
     preset: {
-        paddingVertical: 14,
+        paddingVertical: 12,
         paddingHorizontal: 24,
-        borderRadius: 16,
-        backgroundColor: '#fff',
-        borderWidth: 2,
-        borderColor: '#e5e7eb',
+        borderRadius: 20,
+        backgroundColor: '#F2F2F7',
+        borderWidth: 0,
         alignItems: 'center',
         justifyContent: 'center',
-        minWidth: 80,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-        elevation: 1,
+        minWidth: 70,
     },
     presetActive: {
-        backgroundColor: '#ede9fe',
-        borderColor: '#6366f1',
+        backgroundColor: Colors.primary,
     },
     presetDisabled: {
-        opacity: 0.4,
-        backgroundColor: '#f5f5f5',
+        opacity: 0.5,
     },
     presetTextDisabled: {
         color: '#9ca3af',
     },
     presetText: {
-        fontSize: 24,
-        fontWeight: '700',
-        color: '#374151',
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#8E8E93',
     },
     presetTextActive: {
-        color: '#6366f1',
+        color: Colors.white,
     },
     presetLabel: {
-        fontSize: 11,
-        color: '#9ca3af',
-        marginTop: 2,
-        fontWeight: '500',
+        display: 'none',
     },
     presetLabelActive: {
-        color: '#6366f1',
+        display: 'none',
     },
 
     // Controls
@@ -370,33 +436,27 @@ const styles = StyleSheet.create({
     iconButton: {
         width: 72,
         height: 72,
-        borderRadius: 36,
-        backgroundColor: '#6366f1',
+        borderRadius: 20,
+        backgroundColor: Colors.primary,
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: '#6366f1',
+        shadowColor: Colors.primary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 12,
         elevation: 6,
     },
     pauseButton: {
-        backgroundColor: '#ef4444',
-        shadowColor: '#ef4444',
+        backgroundColor: '#FF6B6B',
+        shadowColor: '#FF6B6B',
     },
     iconButtonSecondary: {
-        width: 64,
-        height: 64,
-        borderRadius: 32,
-        backgroundColor: '#fff',
-        borderWidth: 2,
-        borderColor: '#e5e7eb',
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        backgroundColor: '#F2F2F7',
+        borderWidth: 0,
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
     },
 });

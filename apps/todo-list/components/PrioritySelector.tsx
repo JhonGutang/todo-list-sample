@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Priority } from '@todolist/shared-types';
 
 type Props = {
@@ -16,6 +17,8 @@ const priorities: { value: Priority; label: string; color: string }[] = [
 ];
 
 export default function PrioritySelector({ selectedPriority, onSelect, visible, onClose }: Props) {
+    const insets = useSafeAreaInsets();
+
     const handleSelect = (priority: Priority) => {
         onSelect(priority);
         onClose();
@@ -27,7 +30,7 @@ export default function PrioritySelector({ selectedPriority, onSelect, visible, 
         <Modal visible={visible} transparent animationType="slide">
             <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose}>
                 <View style={styles.dropdownContainer}>
-                    <View style={styles.dropdown}>
+                    <View style={[styles.dropdown, { paddingBottom: Math.max(insets.bottom, 16) }]}>
                         {priorities.map((p) => (
                             <TouchableOpacity
                                 key={p.value}
@@ -49,45 +52,50 @@ export default function PrioritySelector({ selectedPriority, onSelect, visible, 
 const styles = StyleSheet.create({
     backdrop: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.3)',
+        backgroundColor: 'rgba(0,0,0,0.4)',
         justifyContent: 'flex-end',
     },
     dropdownContainer: {
         width: '100%',
+        justifyContent: 'flex-end',
     },
     dropdown: {
         backgroundColor: '#fff',
-        borderTopLeftRadius: 16,
-        borderTopRightRadius: 16,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        maxHeight: '85%',
         shadowColor: '#000',
         shadowOpacity: 0.2,
         shadowRadius: 8,
         elevation: 5,
+        paddingHorizontal: 32,
+        paddingTop: 32,
     },
     item: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 14,
-        borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0',
+        paddingVertical: 16,
+        paddingHorizontal: 0,
+        borderBottomWidth: 0,
     },
     itemSelected: {
-        backgroundColor: '#f8f9fa',
+        backgroundColor: 'transparent',
     },
     colorDot: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        marginRight: 10,
+        width: 16,
+        height: 16,
+        borderRadius: 8,
+        marginRight: 12,
     },
     itemText: {
         flex: 1,
-        fontSize: 15,
-        color: '#333',
+        fontSize: 16,
+        color: '#000',
+        fontWeight: '400',
     },
     checkmark: {
-        fontSize: 16,
-        color: '#007bff',
+        fontSize: 18,
+        color: '#4A90E2',
         fontWeight: 'bold',
     },
 });

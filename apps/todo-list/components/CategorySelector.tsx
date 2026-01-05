@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Category } from '@todolist/shared-types';
 import CreateCategoryModal from './CreateCategoryModal';
 
@@ -21,6 +22,7 @@ export default function CategorySelector({
     onClose,
 }: Props) {
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const insets = useSafeAreaInsets();
 
     const handleSelectCategory = (categoryId: string) => {
         onSelect(categoryId);
@@ -44,7 +46,12 @@ export default function CategorySelector({
                 <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={onClose}>
                     <View style={styles.dropdownContainer}>
                         <View style={styles.dropdown}>
-                            <ScrollView style={styles.scrollView}>
+                            <ScrollView 
+                                style={styles.scrollView}
+                                contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(insets.bottom, 16) }]}
+                                showsVerticalScrollIndicator={false}
+                                bounces={false}
+                            >
                                 {selectableCategories.map((cat) => (
                                     <TouchableOpacity
                                         key={cat.id}
@@ -85,62 +92,69 @@ export default function CategorySelector({
 const styles = StyleSheet.create({
     backdrop: {
         flex: 1,
-        backgroundColor: 'rgba(0,0,0,0.3)',
+        backgroundColor: 'rgba(0,0,0,0.4)',
         justifyContent: 'flex-end',
     },
     dropdownContainer: {
         width: '100%',
+        justifyContent: 'flex-end',
     },
     dropdown: {
         backgroundColor: '#fff',
-        borderTopLeftRadius: 16,
-        borderTopRightRadius: 16,
-        maxHeight: 400,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        maxHeight: '85%',
+        minHeight: 300,
         shadowColor: '#000',
         shadowOpacity: 0.2,
         shadowRadius: 8,
         elevation: 5,
     },
     scrollView: {
-        maxHeight: 400,
+        flex: 1,
+    },
+    scrollContent: {
+        paddingHorizontal: 32,
+        paddingTop: 32,
     },
     item: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 14,
-        borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0',
+        paddingVertical: 16,
+        paddingHorizontal: 0,
+        borderBottomWidth: 0,
     },
     itemSelected: {
-        backgroundColor: '#f8f9fa',
+        backgroundColor: 'transparent',
     },
     colorDot: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
-        marginRight: 10,
+        width: 16,
+        height: 16,
+        borderRadius: 8,
+        marginRight: 12,
     },
     itemText: {
         flex: 1,
-        fontSize: 15,
-        color: '#333',
+        fontSize: 16,
+        color: '#000',
+        fontWeight: '400',
     },
     checkmark: {
-        fontSize: 16,
-        color: '#007bff',
+        fontSize: 18,
+        color: '#4A90E2',
         fontWeight: 'bold',
     },
     divider: {
         height: 1,
-        backgroundColor: '#e0e0e0',
-        marginVertical: 4,
+        backgroundColor: '#E8E8E8',
+        marginVertical: 8,
     },
     createItem: {
-        padding: 14,
+        paddingTop: 16,
     },
     createText: {
-        fontSize: 15,
-        color: '#007bff',
+        fontSize: 16,
+        color: '#4A90E2',
         fontWeight: '600',
     },
 });

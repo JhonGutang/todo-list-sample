@@ -2,11 +2,13 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Task, TaskWithSubtasks, Category } from '@todolist/shared-types';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View, Modal, ScrollView } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Chip from '../../components/Chip';
 import TaskModal from '../../components/tasks/TaskModal';
 import useDateFormatter from '../../hooks/useDateFormatter';
 import { initDb, getAllCategories, createTask, getAllTasks, getSubtasksForTask } from '../../services';
+import Colors from '../../constants/Colors';
 
 export default function TasksPage() {
   const router = useRouter();
@@ -15,10 +17,9 @@ export default function TasksPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const { formatRange } = useDateFormatter();
   const [filter, setFilter] = useState<string>('all');
-  const [priorityFilter, setPriorityFilter] = useState<string>('all'); // all, low, medium, high
-  const [deadlineSort, setDeadlineSort] = useState<string>('none'); // none, asc, desc
+  const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [deadlineSort, setDeadlineSort] = useState<string>('none');
   const [modalVisible, setModalVisible] = useState(false);
-  const [showFilterModal, setShowFilterModal] = useState(false);
 
   const loadCategories = useCallback(async () => {
     try {
@@ -56,41 +57,45 @@ export default function TasksPage() {
 
   const filteredTasks = tasksWithSubtasks
     .filter((task) => {
-      // Category filter
       if (filter === 'all') {
-        // Exclude completed tasks from "All" view
         return task.category_id !== 'cat_completed';
       }
       return task.category_id === filter;
     })
     .filter((task) => {
-      // Priority filter
       if (priorityFilter === 'all') return true;
       return task.priority === priorityFilter;
     })
     .sort((a, b) => {
-      // Deadline sort
       if (deadlineSort === 'none') return 0;
-
       const dateA = a.endDate ? new Date(a.endDate).getTime() : Infinity;
       const dateB = b.endDate ? new Date(b.endDate).getTime() : Infinity;
-
-      if (deadlineSort === 'asc') {
-        return dateA - dateB;
-      } else if (deadlineSort === 'desc') {
-        return dateB - dateA;
-      }
+      if (deadlineSort === 'asc') return dateA - dateB;
+      else if (deadlineSort === 'desc') return dateB - dateA;
       return 0;
     });
+
+  const completedCount = tasksWithSubtasks.filter(t => t.completed).length;
+  const totalCount = tasksWithSubtasks.length;
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'high': return Colors.priorityHigh;
+      case 'medium': return Colors.priorityMedium;
+      case 'low': return Colors.priorityLow;
+      default: return 'transparent';
+    }
+  };
 
   const renderItem = ({ item }: { item: TaskWithSubtasks }) => {
     const dateLabel = formatRange(item.startDate ?? undefined, item.endDate ?? undefined);
     const category = categories.find((c) => c.id === item.category_id);
-    const categoryColor = category?.color || '#999';
+    const categoryColor = category?.color || Colors.textSecondary;
     const categoryName = category?.name || 'Uncategorized';
+    const priorityColor = getPriorityColor(item.priority || '');
 
     const handleToggleComplete = async (e: any) => {
-      e.stopPropagation(); // Prevent navigation to task details
+      e.stopPropagation();
       try {
         const { setTaskCompletion } = await import('../../services');
         await setTaskCompletion(item.id, !item.completed);
@@ -105,26 +110,23 @@ export default function TasksPage() {
         style={({ pressed }) => [
           styles.card,
           item.completed && styles.cardCompleted,
-          pressed ? styles.cardPressed : null
+          pressed && styles.cardPressed
         ]}
         onPress={() => router.push({ pathname: '/task/[id]', params: { id: item.id } })}
       >
-        {item.subtasks && item.subtasks.length ? (
-          <View style={styles.subtaskCorner}>
-            <Text style={styles.subtaskText}>
-              {item.subtasks.filter((s) => s.completed).length}/{item.subtasks.length}
-            </Text>
-          </View>
-        ) : null}
+        {/* Priority Indicator Dot */}
+        {priorityColor !== 'transparent' && (
+          <View style={[styles.priorityIndicator, { backgroundColor: priorityColor }]} />
+        )}
 
         <View style={styles.cardContent}>
-          {/* Radio Button */}
+          {/* Checkbox */}
           <Pressable
-            style={styles.radioButton}
+            style={styles.checkboxContainer}
             onPress={handleToggleComplete}
           >
-            <View style={[styles.radioOuter, item.completed && styles.radioOuterChecked]}>
-              {item.completed && <View style={styles.radioInner} />}
+            <View style={[styles.checkbox, item.completed && styles.checkboxChecked]}>
+              {item.completed && <Ionicons name="checkmark" size={16} color={Colors.primary} />}
             </View>
           </Pressable>
 
@@ -134,13 +136,13 @@ export default function TasksPage() {
               {item.name}
             </Text>
             {item.description ? (
-              <Text style={[styles.desc, item.completed && styles.descCompleted]}>
+              <Text style={[styles.desc, item.completed && styles.descCompleted]} numberOfLines={1}>
                 {item.description}
               </Text>
             ) : null}
-            <View style={styles.row}>
+            <View style={styles.metaRow}>
               <Chip label={categoryName} color={categoryColor} variant="label" />
-              <Text style={styles.dates}>{dateLabel}</Text>
+              {dateLabel && <Text style={styles.date}>{dateLabel}</Text>}
             </View>
           </View>
         </View>
@@ -149,67 +151,135 @@ export default function TasksPage() {
   };
 
   const filterChips = [
-    { id: 'all', label: 'All', color: '#999' },
+    { id: 'all', label: 'All' },
     ...categories
-      .filter((cat) => cat.id !== 'cat_completed') // Exclude Completed from normal position
-      .map((cat) => ({ id: cat.id, label: cat.name, color: cat.color || '#999' })),
-    // Add Completed category at the end if it exists
+      .filter((cat) => cat.id !== 'cat_completed')
+      .map((cat) => ({ id: cat.id, label: cat.name })),
     ...categories
       .filter((cat) => cat.id === 'cat_completed')
-      .map((cat) => ({ id: cat.id, label: cat.name, color: cat.color || '#999' })),
+      .map((cat) => ({ id: cat.id, label: cat.name })),
   ];
 
   return (
     <View style={styles.container}>
-      {/* Category Filter Chips */}
-      <View style={styles.filterRow}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterScrollContent}
-          style={styles.filterScroll}
-        >
-          {filterChips.map((chip) => {
-            const active = filter === chip.id;
-            return (
-              <Chip
-                key={chip.id}
-                label={chip.label}
-                color={chip.color}
-                variant="filter"
-                active={active}
-                onPress={() => setFilter(chip.id)}
-                style={{ marginRight: 8 }}
-              />
-            );
-          })}
-        </ScrollView>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <View style={styles.logoContainer}>
+            <View style={styles.logo}>
+              <Text style={styles.logoText}>M</Text>
+            </View>
+            <Text style={styles.headerTitle}>Tasks</Text>
+          </View>
+          <Pressable
+            style={styles.addButton}
+            onPress={() => setModalVisible(true)}
+          >
+            <Ionicons name="add" size={24} color={Colors.primary} />
+          </Pressable>
+        </View>
+        <Text style={styles.headerSubtitle}>{completedCount} of {totalCount} completed</Text>
+      </View>
 
-        {/* Filter Button - Always visible */}
+      {/* Category Filter Pills */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.categoryScrollContent}
+        style={styles.categoryScroll}
+      >
+        {filterChips.map((chip) => {
+          const active = filter === chip.id;
+          return (
+            <Pressable
+              key={chip.id}
+              style={[styles.categoryPill, active && styles.categoryPillActive]}
+              onPress={() => setFilter(chip.id)}
+            >
+              <Text style={[styles.categoryPillText, active && styles.categoryPillTextActive]}>
+                {chip.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      {/* Sort and Priority Filter Row */}
+      <View style={styles.sortFilterRow}>
         <Pressable
-          style={styles.filterButton}
-          onPress={() => setShowFilterModal(true)}
+          style={styles.sortButton}
+          onPress={() => {
+            if (deadlineSort === 'none') setDeadlineSort('asc');
+            else if (deadlineSort === 'asc') setDeadlineSort('desc');
+            else setDeadlineSort('none');
+          }}
         >
-          <Text style={styles.filterButtonIcon}>⚙</Text>
-          <Text style={styles.filterButtonText}>Filter</Text>
+          <Text style={styles.sortButtonText}>Date</Text>
+          <Ionicons
+            name={deadlineSort === 'asc' ? 'arrow-up' : deadlineSort === 'desc' ? 'arrow-down' : 'remove-outline'}
+            size={14}
+            color={Colors.textSecondary}
+            style={{ marginLeft: 4 }}
+          />
+        </Pressable>
+
+        {/* Priority Chip */}
+        <Pressable
+          style={[
+            styles.priorityChip,
+            {
+              backgroundColor:
+                priorityFilter === 'high'
+                  ? Colors.priorityHigh
+                  : priorityFilter === 'medium'
+                    ? Colors.priorityMedium
+                    : priorityFilter === 'low'
+                      ? Colors.priorityLow
+                      : '#E5E7EB',
+            },
+          ]}
+          onPress={() => {
+            if (priorityFilter === 'all') setPriorityFilter('high');
+            else if (priorityFilter === 'high') setPriorityFilter('medium');
+            else if (priorityFilter === 'medium') setPriorityFilter('low');
+            else setPriorityFilter('all');
+          }}
+        >
+          <Text
+            style={[
+              styles.priorityChipText,
+              {
+                color:
+                  priorityFilter === 'all'
+                    ? Colors.textSecondary
+                    : Colors.white,
+              },
+            ]}
+          >
+            {priorityFilter === 'all'
+              ? 'Priority'
+              : priorityFilter === 'high'
+                ? 'High'
+                : priorityFilter === 'medium'
+                  ? 'Medium'
+                  : 'Low'}
+          </Text>
         </Pressable>
       </View>
 
+      {/* Task List */}
       <FlatList
         data={filteredTasks}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
-        contentContainerStyle={[styles.list, filteredTasks.length === 0 && { flex: 1 }]}
+        contentContainerStyle={[styles.listContent, filteredTasks.length === 0 && styles.listContentEmpty]}
+        scrollEnabled={filteredTasks.length > 0}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No tasks found. Create one to get started!</Text>
+            <Text style={styles.emptyText}>No tasks found. Tap + to create one!</Text>
           </View>
         }
       />
-
-      <Pressable style={styles.fab} onPress={() => setModalVisible(true)}>
-        <Text style={styles.fabText}>+</Text>
-      </Pressable>
 
       <TaskModal
         visible={modalVisible}
@@ -217,308 +287,252 @@ export default function TasksPage() {
         onCreate={async (task, subtasks) => {
           try {
             await createTask(task);
-
-            // Save subtasks if any
             if (subtasks && subtasks.length > 0) {
               const { addSubtask } = await import('../../services');
               for (let i = 0; i < subtasks.length; i++) {
                 await addSubtask(task.id, { title: subtasks[i], order: i });
               }
             }
-
             await loadTasks();
-            await loadCategories(); // Reload categories in case a new one was created
+            await loadCategories();
           } catch (error) {
             console.error('Failed to create task:', error);
           }
         }}
       />
-
-      {/* Filter Modal */}
-      {showFilterModal && (
-        <Pressable
-          style={styles.filterModalBackdrop}
-          onPress={() => setShowFilterModal(false)}
-        >
-          <Pressable style={styles.filterModalContent} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.filterModalTitle}>Filter Options</Text>
-
-            {/* Priority Dropdown */}
-            <View style={styles.filterSection}>
-              <Text style={styles.filterSectionLabel}>Priority</Text>
-              <View style={styles.filterOptions}>
-                {['all', 'low', 'medium', 'high'].map((p) => (
-                  <Pressable
-                    key={p}
-                    style={[
-                      styles.filterOption,
-                      priorityFilter === p && styles.filterOptionActive,
-                    ]}
-                    onPress={() => setPriorityFilter(p)}
-                  >
-                    <View
-                      style={[
-                        styles.filterOptionDot,
-                        {
-                          backgroundColor:
-                            p === 'all'
-                              ? '#999'
-                              : p === 'high'
-                                ? '#e74c3c'
-                                : p === 'medium'
-                                  ? '#f39c12'
-                                  : '#2ecc71',
-                        },
-                      ]}
-                    />
-                    <Text style={styles.filterOptionText}>
-                      {p === 'all' ? 'All' : p.charAt(0).toUpperCase() + p.slice(1)}
-                    </Text>
-                    {priorityFilter === p && <Text style={styles.filterOptionCheck}>✓</Text>}
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-
-            {/* Deadline Sort Dropdown */}
-            <View style={styles.filterSection}>
-              <Text style={styles.filterSectionLabel}>Deadline Sort</Text>
-              <View style={styles.filterOptions}>
-                {[
-                  { id: 'none', label: 'None' },
-                  { id: 'asc', label: 'Ascending (Earliest First)' },
-                  { id: 'desc', label: 'Descending (Latest First)' },
-                ].map((d) => (
-                  <Pressable
-                    key={d.id}
-                    style={[
-                      styles.filterOption,
-                      deadlineSort === d.id && styles.filterOptionActive,
-                    ]}
-                    onPress={() => setDeadlineSort(d.id)}
-                  >
-                    <Text style={styles.filterOptionText}>{d.label}</Text>
-                    {deadlineSort === d.id && <Text style={styles.filterOptionCheck}>✓</Text>}
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-
-            {/* Close Button */}
-            <Pressable
-              style={styles.filterModalCloseButton}
-              onPress={() => setShowFilterModal(false)}
-            >
-              <Text style={styles.filterModalCloseText}>Done</Text>
-            </Pressable>
-          </Pressable>
-        </Pressable>
-      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  list: { padding: 16, paddingBottom: 120 },
-  filterRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  filterScroll: {
+  container: {
     flex: 1,
+    backgroundColor: Colors.white,
   },
-  filterScrollContent: {
-    paddingRight: 8,
+
+  // Header
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
   },
-  filterButton: {
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 20,
-    marginLeft: 8,
+    justifyContent: 'space-between',
+    marginBottom: 4,
   },
-  filterButtonIcon: {
-    fontSize: 14,
-    marginRight: 4,
+  logoContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  filterButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#333',
+  logo: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
-  filterModalBackdrop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-    justifyContent: 'flex-end',
-  },
-  filterModalContent: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    padding: 20,
-    maxHeight: '70%',
-  },
-  filterModalTitle: {
+  logoText: {
+    color: Colors.white,
     fontSize: 18,
     fontWeight: '700',
-    marginBottom: 20,
-    color: '#111',
   },
-  filterSection: {
-    marginBottom: 20,
-  },
-  filterSectionLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 10,
-  },
-  filterOptions: {
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    overflow: 'hidden',
-  },
-  filterOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  filterOptionActive: {
-    backgroundColor: '#f0f7ff',
-  },
-  filterOptionDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginRight: 10,
-  },
-  filterOptionText: {
-    flex: 1,
-    fontSize: 15,
-    color: '#111',
-  },
-  filterOptionCheck: {
-    fontSize: 16,
-    color: '#007bff',
+  headerTitle: {
+    fontSize: 28,
     fontWeight: '700',
+    color: Colors.textPrimary,
+    letterSpacing: -0.5,
   },
-  filterModalCloseButton: {
-    backgroundColor: '#007bff',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
+  headerSubtitle: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginLeft: 48,
+    fontWeight: '500',
   },
-  filterModalCloseText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  chipsContainer: { flexDirection: 'row', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6 },
-  chip: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 20, marginRight: 8 },
-  chipText: { fontSize: 13, fontWeight: '600' },
-  card: {
-    backgroundColor: '#f9f9f9',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-  cardContent: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  radioButton: {
-    padding: 4,
-    marginRight: 8,
-  },
-  radioOuter: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#ccc',
+  addButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  radioOuterChecked: {
-    borderColor: '#10b981',
+
+  // Category Pills
+  categoryScroll: {
+    height: 40,
+    marginTop: 12,
+    marginBottom: 8,
+    flexGrow: 0,
+    flexShrink: 0,
   },
-  radioInner: {
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: '#10b981',
+  categoryScrollContent: {
+    paddingHorizontal: 20,
+    gap: 8,
   },
-  taskContent: {
-    flex: 1,
-  },
-  cardPressed: { opacity: 0.8 },
-  cardCompleted: {
-    backgroundColor: '#e8e8e8',
-    opacity: 0.85,
-  },
-  title: { fontSize: 16, fontWeight: '600', marginBottom: 4 },
-  titleCompleted: {
-    textDecorationLine: 'line-through',
-    color: '#888',
-  },
-  desc: { color: '#555', marginBottom: 8 },
-  descCompleted: {
-    color: '#999',
-  },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  badge: { paddingVertical: 4, paddingHorizontal: 8, borderRadius: 12 },
-  badgeText: { color: '#fff', fontWeight: '600', textTransform: 'capitalize' },
-  dates: { color: '#666', fontSize: 12 },
-  subtaskCorner: {
-    position: 'absolute',
-    right: 12,
-    top: 12,
-    backgroundColor: '#eef6ff',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    zIndex: 5,
-  },
-  subtaskText: { color: '#007bff', fontWeight: '700', fontSize: 12 },
-  fab: {
-    position: 'absolute',
-    right: 24,
-    bottom: 24,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#007bff',
+  categoryPill: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 24,
+    backgroundColor: '#E5E7EB',
+    marginRight: 4,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+  },
+  categoryPillActive: {
+    backgroundColor: Colors.primary,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
-    elevation: 4,
+    elevation: 2,
   },
-  fabText: { color: '#fff', fontSize: 28, lineHeight: 28 },
+  categoryPillText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  categoryPillTextActive: {
+    color: Colors.white,
+  },
+
+  // Sort & Filter Row
+  sortFilterRow: {
+    height: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+    flexGrow: 0,
+    flexShrink: 0,
+    gap: 10,
+  },
+  sortButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sortButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  priorityChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  priorityChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
+  // Task List
+  listContent: {
+    padding: 16,
+    paddingBottom: 40,
+  },
+  listContentEmpty: {
+    flex: 1,
+    paddingBottom: 20, // Override the large bottom padding when empty
+  },
   emptyContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 80,
+    paddingVertical: 60,
   },
   emptyText: {
-    fontSize: 16,
-    color: '#888',
+    fontSize: 15,
+    color: Colors.textSecondary,
     textAlign: 'center',
+  },
+
+  // Task Card
+  card: {
+    backgroundColor: Colors.white,
+    borderRadius: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  cardCompleted: {
+    opacity: 0.6,
+  },
+  cardPressed: {
+    opacity: 0.7,
+  },
+  priorityIndicator: {
+    position: 'absolute',
+    right: 12,
+    top: 12,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  cardContent: {
+    flexDirection: 'row',
+    padding: 16,
+    alignItems: 'flex-start',
+  },
+  checkboxContainer: {
+    paddingTop: 2,
+    marginRight: 12,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.white,
+  },
+  checkboxChecked: {
+    borderColor: Colors.primary,
+    backgroundColor: '#EFF6FF',
+  },
+  taskContent: {
+    flex: 1,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+    marginBottom: 4,
+    letterSpacing: -0.2,
+  },
+  titleCompleted: {
+    textDecorationLine: 'line-through',
+    color: Colors.textSecondary,
+  },
+  desc: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  descCompleted: {
+    color: Colors.textTertiary,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  date: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    fontWeight: '500',
   },
 });

@@ -175,7 +175,6 @@ export default function TaskDetail() {
           {task.description ? <Text style={styles.desc}>{task.description}</Text> : null}
           <View style={styles.rowBetween}>
             <Chip label={task.priority ?? 'medium'} variant="label" color={getPriorityColor(task.priority ?? 'medium')} />
-            <Text style={styles.idText}>ID: {task.id}</Text>
           </View>
 
           {/* Action buttons moved to top-right menu */}

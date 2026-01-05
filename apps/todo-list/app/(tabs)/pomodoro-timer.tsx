@@ -8,6 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useTimer } from '@/contexts/TimerContext';
 import { usePomodoro } from '@/contexts/PomodoroContext';
 import { PomodoroConfig } from '@todolist/shared-types';
+import Colors from '@/constants/Colors';
 
 type TimerMode = 'focus' | 'task';
 
@@ -115,7 +116,7 @@ export default function PomodoroTimerPage() {
                     <FontAwesome
                         name="clock-o"
                         size={18}
-                        color={effectiveMode === 'focus' ? '#fff' : (isTimerRunning || hasActiveSession) ? '#ccc' : '#666'}
+                        color={effectiveMode === 'focus' ? Colors.white : (isTimerRunning || hasActiveSession) ? Colors.border : Colors.textSecondary}
                         style={styles.tabIcon}
                     />
                     <Text style={[
@@ -140,7 +141,7 @@ export default function PomodoroTimerPage() {
                     <FontAwesome
                         name="tasks"
                         size={18}
-                        color={effectiveMode === 'task' ? '#fff' : (isTimerRunning || hasActiveSession) ? '#ccc' : '#666'}
+                        color={effectiveMode === 'task' ? Colors.white : (isTimerRunning || hasActiveSession) ? Colors.border : Colors.textSecondary}
                         style={styles.tabIcon}
                     />
                     <Text style={[
@@ -192,7 +193,7 @@ export default function PomodoroTimerPage() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fafafa',
+        backgroundColor: Colors.white,
         paddingTop: 16,
     },
     focusContent: {
@@ -213,15 +214,16 @@ const styles = StyleSheet.create({
     // Tab Styles
     tabContainer: {
         flexDirection: 'row',
-        backgroundColor: '#fff',
+        backgroundColor: Colors.white,
         borderRadius: 16,
         padding: 4,
         marginBottom: 16,
+        marginHorizontal: 16,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 8,
-        elevation: 2,
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        elevation: 3,
         alignSelf: 'center',
     },
     tab: {
@@ -234,8 +236,8 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     tabActive: {
-        backgroundColor: '#6366f1',
-        shadowColor: '#6366f1',
+        backgroundColor: Colors.primary,
+        shadowColor: Colors.primary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
@@ -250,13 +252,13 @@ const styles = StyleSheet.create({
     tabText: {
         fontSize: 15,
         fontWeight: '600',
-        color: '#666',
+        color: Colors.textSecondary,
     },
     tabTextActive: {
-        color: '#fff',
+        color: Colors.white,
     },
     tabTextDisabled: {
-        color: '#ccc',
+        color: Colors.border,
     },
 });
 
