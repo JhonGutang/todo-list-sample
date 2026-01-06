@@ -6,6 +6,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { Task, Category, ReminderPreset } from '@todolist/shared-types';
 import { Ionicons } from '@expo/vector-icons';
@@ -165,23 +166,30 @@ export default function TaskModal({ visible, onClose, onCreate }: Props) {
                 <Text style={[styles.addSubtaskText, { color: theme.primary }]}>+ Add subtask</Text>
               </TouchableOpacity>
             </View>
-            {subtasks.map((subtask, index) => (
-              <View key={index} style={styles.subtaskRow}>
-                <TouchableOpacity onPress={() => removeSubtask(index)}>
-                  <View style={[styles.radioButton, { borderColor: theme.textSecondary }]} />
-                </TouchableOpacity>
-                <TextInput
-                  value={subtask}
-                  onChangeText={(val) => updateSubtask(index, val)}
-                  style={[styles.subtaskText, { color: theme.textPrimary }]}
-                  placeholder={`Subtask ${index + 1}`}
-                  placeholderTextColor={theme.textTertiary}
-                />
-                <TouchableOpacity onPress={() => removeSubtask(index)} style={styles.removeButtonContainer}>
-                  <Text style={[styles.removeButton, { color: theme.priorityHigh }]}>✕</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
+            <ScrollView
+              style={styles.subtasksList}
+              contentContainerStyle={styles.subtasksListContent}
+              nestedScrollEnabled
+              showsVerticalScrollIndicator={true}
+            >
+              {subtasks.map((subtask, index) => (
+                <View key={index} style={styles.subtaskRow}>
+                  <TouchableOpacity onPress={() => removeSubtask(index)}>
+                    <View style={[styles.radioButton, { borderColor: theme.textSecondary }]} />
+                  </TouchableOpacity>
+                  <TextInput
+                    value={subtask}
+                    onChangeText={(val) => updateSubtask(index, val)}
+                    style={[styles.subtaskText, { color: theme.textPrimary }]}
+                    placeholder={`Subtask ${index + 1}`}
+                    placeholderTextColor={theme.textTertiary}
+                  />
+                  <TouchableOpacity onPress={() => removeSubtask(index)} style={styles.removeButtonContainer}>
+                    <Text style={[styles.removeButton, { color: theme.priorityHigh }]}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </ScrollView>
           </View>
         )}
 
@@ -406,6 +414,12 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  subtasksList: {
+    maxHeight: 135,
+  },
+  subtasksListContent: {
+    paddingRight: 4,
   },
   subtaskRow: {
     flexDirection: 'row',

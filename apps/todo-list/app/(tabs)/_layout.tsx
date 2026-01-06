@@ -23,23 +23,30 @@ function TabsContent() {
             shadowOffset: { width: 0, height: -2 },
             shadowOpacity: 0.1,
             shadowRadius: 8,
-            height: 60,
+            height: 70,
             paddingBottom: 8,
             paddingTop: 0,
+            justifyContent: 'center',
+            alignItems: 'center',
             ...(Platform.OS === 'ios' && {
               backdropFilter: 'blur(10px)',
             }),
           },
           tabBarItemStyle: {
             paddingVertical: 4,
+            justifyContent: 'center',
+            alignItems: 'center',
+            flex: 1,
           },
           tabBarLabelStyle: {
             fontSize: 11,
             fontWeight: '600',
             marginTop: 4,
+            textAlign: 'center',
           },
           tabBarIconStyle: {
             marginTop: 2,
+            alignSelf: 'center',
           },
         }}
         screenListeners={({ navigation, route }) => ({
@@ -63,7 +70,7 @@ function TabsContent() {
           options={{
             title: 'Tasks',
             headerTitle: 'My Tasks',
-            tabBarIcon: ({ color, size, focused }) => (
+            tabBarIcon: ({ color, focused }) => (
               <Ionicons
                 name={focused ? "checkmark-done" : "checkmark-done-outline"}
                 size={24}
