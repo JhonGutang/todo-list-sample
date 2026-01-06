@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Category } from '@todolist/shared-types';
 import ModalBase from '../ModalBase';
+import { useTheme } from '../../contexts/ThemeContext';
 
 type Props = {
     categories: Category[];
@@ -18,6 +19,7 @@ export default function CategorySelector({
     visible,
     onClose,
 }: Props) {
+    const { theme } = useTheme();
     const handleSelectCategory = (categoryId: string) => {
         onSelect(categoryId);
         onClose();
@@ -43,8 +45,8 @@ export default function CategorySelector({
                         onPress={() => handleSelectCategory(cat.id)}
                     >
                         <View style={[styles.colorDot, { backgroundColor: cat.color || '#999' }]} />
-                        <Text style={styles.itemText}>{cat.name}</Text>
-                        {selectedCategoryId === cat.id && <Text style={styles.checkmark}>✓</Text>}
+                        <Text style={[styles.itemText, { color: theme.textPrimary }]}>{cat.name}</Text>
+                        {selectedCategoryId === cat.id && <Text style={[styles.checkmark, { color: theme.primary }]}>✓</Text>}
                     </TouchableOpacity>
                 ))}
             </View>
@@ -53,30 +55,6 @@ export default function CategorySelector({
 }
 
 const styles = StyleSheet.create({
-    absoluteFill: {
-        ...StyleSheet.absoluteFillObject,
-    },
-    backdrop: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(0,0,0,1)', // Actual opacity is handled by Animated.View
-    },
-    dropdownContainer: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: '100%',
-        justifyContent: 'flex-end',
-    },
-    dropdown: {
-        backgroundColor: '#fff',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
-        shadowColor: '#000',
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-        elevation: 5,
-    },
     content: {
         paddingHorizontal: 32,
         paddingTop: 15,
@@ -100,12 +78,10 @@ const styles = StyleSheet.create({
     itemText: {
         flex: 1,
         fontSize: 16,
-        color: '#000',
         fontWeight: '400',
     },
     checkmark: {
         fontSize: 18,
-        color: '#4A90E2',
         fontWeight: 'bold',
     },
 });

@@ -1,4 +1,5 @@
 export type Priority = 'low' | 'medium' | 'high';
+export type ReminderPreset = '5min' | '1min' | '30sec';
 
 export interface Category {
   id: string;
@@ -16,6 +17,9 @@ export interface Task {
   /** @deprecated Use endDate instead. Kept for backward compatibility. */
   startDate?: string | null;
   endDate?: string | null;
+  startTime?: string | null;
+  reminderPreset?: ReminderPreset | null;
+  notificationId?: string | null;
   category_id?: string | null;
   createdAt?: string;
   updatedAt?: string | null;
@@ -92,5 +96,6 @@ export interface PomodoroSessionWithTask extends PomodoroSession {
     order: number | null;
   }>;
 }
+
 
 

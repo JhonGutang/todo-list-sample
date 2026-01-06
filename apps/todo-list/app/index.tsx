@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export default function Index() {
   const router = useRouter();
+  const { theme } = useTheme();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -14,10 +16,10 @@ export default function Index() {
   }, [router]);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.content}>
-        <Text style={styles.logo}>To Do List</Text>
-        <Text style={styles.creator}>Created by JBG Dev</Text>
+        <Text style={[styles.logo, { color: theme.primary }]}>Momentum</Text>
+        <Text style={[styles.creator, { color: theme.textSecondary }]}>Created by JBG Dev</Text>
       </View>
     </View>
   );
@@ -26,7 +28,6 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -37,13 +38,11 @@ const styles = StyleSheet.create({
   logo: {
     fontSize: 48,
     fontWeight: '700',
-    color: '#007bff',
     marginBottom: 16,
     letterSpacing: 1,
   },
   creator: {
     fontSize: 16,
-    color: '#666',
     fontWeight: '500',
   },
 });

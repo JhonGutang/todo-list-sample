@@ -87,4 +87,32 @@ export async function transactionAsync(fn: (db: SQLite.SQLiteDatabase) => Promis
   });
 }
 
+/**
+ * Closes the current database connection and resets the connection state.
+ * Useful before deleting the database file.
+ */
+export async function closeDb(): Promise<void> {
+  if (db) {
+    await db.closeAsync();
+    db = null;
+  }
+  initPromise = null;
+}
+
+/**
+ * Deletes the database file completely.
+ * This will remove the entire database and all its data.
+ * Make sure to close the database connection first.
+ */
+export async function deleteDatabase(): Promise<void> {
+  await closeDb();
+  try {
+    await SQLite.deleteDatabaseAsync(DB_NAME);
+    console.log(`Database ${DB_NAME} deleted successfully`);
+  } catch (error) {
+    console.warn(`Failed to delete database ${DB_NAME}:`, error);
+    throw error;
+  }
+}
+
 export { getDb };

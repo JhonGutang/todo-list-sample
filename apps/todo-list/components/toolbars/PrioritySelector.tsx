@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Priority } from '@todolist/shared-types';
 import ModalBase from '../ModalBase';
+import { useTheme } from '../../contexts/ThemeContext';
 
 type Props = {
     selectedPriority: Priority;
@@ -10,13 +11,15 @@ type Props = {
     onClose: () => void;
 };
 
-const priorities: { value: Priority; label: string; color: string }[] = [
-    { value: 'low', label: 'Low', color: '#2ecc71' },
-    { value: 'medium', label: 'Medium', color: '#f39c12' },
-    { value: 'high', label: 'High', color: '#e74c3c' },
-];
-
 export default function PrioritySelector({ selectedPriority, onSelect, visible, onClose }: Props) {
+    const { theme } = useTheme();
+
+    const priorities: { value: Priority; label: string; color: string }[] = [
+        { value: 'low', label: 'Low', color: theme.priorityLow },
+        { value: 'medium', label: 'Medium', color: theme.priorityMedium },
+        { value: 'high', label: 'High', color: theme.priorityHigh },
+    ];
+
     const handleSelect = (priority: Priority) => {
         onSelect(priority);
         onClose();
@@ -32,8 +35,8 @@ export default function PrioritySelector({ selectedPriority, onSelect, visible, 
                         onPress={() => handleSelect(p.value)}
                     >
                         <View style={[styles.colorDot, { backgroundColor: p.color }]} />
-                        <Text style={styles.itemText}>{p.label}</Text>
-                        {selectedPriority === p.value && <Text style={styles.checkmark}>✓</Text>}
+                        <Text style={[styles.itemText, { color: theme.textPrimary }]}>{p.label}</Text>
+                        {selectedPriority === p.value && <Text style={[styles.checkmark, { color: theme.primary }]}>✓</Text>}
                     </TouchableOpacity>
                 ))}
             </View>
@@ -65,12 +68,10 @@ const styles = StyleSheet.create({
     itemText: {
         flex: 1,
         fontSize: 16,
-        color: '#000',
         fontWeight: '400',
     },
     checkmark: {
         fontSize: 18,
-        color: '#4A90E2',
         fontWeight: 'bold',
     },
 });

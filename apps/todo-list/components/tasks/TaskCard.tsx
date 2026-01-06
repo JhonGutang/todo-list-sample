@@ -98,7 +98,17 @@ const TaskCard = ({ item, index, categories, onToggleComplete, priorityColor }: 
                         </Text>
                         <View style={styles.metaRow}>
                             <Chip label={categoryName} color={categoryColor} variant="label" size="small" />
-                            {dateLabel && <Text style={[styles.date, { color: theme.textSecondary }]}>{dateLabel}</Text>}
+                            {item.startTime && (
+                                <View style={styles.timeContainer}>
+                                    {item.reminderPreset && (
+                                        <Ionicons name="notifications" size={12} color={theme.textSecondary} style={{ marginRight: 4 }} />
+                                    )}
+                                    <Text style={[styles.date, { color: theme.textSecondary }]}>
+                                        {new Date(item.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                                    </Text>
+                                </View>
+                            )}
+                            {!item.startTime && dateLabel && <Text style={[styles.date, { color: theme.textSecondary }]}>{dateLabel}</Text>}
                         </View>
                     </View>
                 </View>
@@ -163,6 +173,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         marginTop: 4,
+    },
+    timeContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
     },
     date: {
         fontSize: 12,

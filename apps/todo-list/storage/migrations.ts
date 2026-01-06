@@ -161,6 +161,22 @@ INSERT INTO categories (id, name, color, isDefault, createdAt) VALUES
 
 COMMIT;
 `
+  },
+  {
+    name: '006_add_task_reminders.sql',
+    sql: `
+BEGIN TRANSACTION;
+
+-- Add reminder fields to tasks table
+ALTER TABLE tasks ADD COLUMN startTime TEXT;
+ALTER TABLE tasks ADD COLUMN reminderPreset TEXT CHECK (reminderPreset IN ('5min','1min','30sec'));
+ALTER TABLE tasks ADD COLUMN notificationId TEXT;
+
+-- Create index for efficient querying of upcoming tasks
+CREATE INDEX IF NOT EXISTS idx_tasks_startTime ON tasks(startTime);
+
+COMMIT;
+`
   }
 ];
 

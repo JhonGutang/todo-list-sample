@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTheme } from '../contexts/ThemeContext';
 
 type Props = {
     visible: boolean;
@@ -30,6 +31,7 @@ export default function ModalBase({
 }: Props) {
     const [isMounted, setIsMounted] = useState(visible);
     const anim = useRef(new Animated.Value(0)).current;
+    const { theme } = useTheme();
 
     useEffect(() => {
         if (visible) {
@@ -67,7 +69,18 @@ export default function ModalBase({
                 <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]} />
             </TouchableOpacity>
 
-            <Animated.View style={[styles.sheet, { transform: [{ translateY }], maxHeight }]}>
+            <Animated.View
+                style={[
+                    styles.sheet,
+                    {
+                        transform: [{ translateY }],
+                        maxHeight,
+                        backgroundColor: theme.cardBg,
+                        borderTopLeftRadius: theme.cardRadius,
+                        borderTopRightRadius: theme.cardRadius,
+                    }
+                ]}
+            >
                 <SafeAreaView edges={['bottom']}>
                     {children}
                 </SafeAreaView>
@@ -104,9 +117,6 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: '#fff',
-        borderTopLeftRadius: 20,
-        borderTopRightRadius: 20,
         shadowColor: '#000',
         shadowOpacity: 0.2,
         shadowRadius: 8,

@@ -1,10 +1,41 @@
-import React from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from "react-native";
+import React, { useState } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert } from "react-native";
 import { useTheme } from "@/contexts/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
+import { resetDatabase } from "@/services";
 
 export default function SettingsPage() {
     const { theme, themeType, setTheme, isDark } = useTheme();
+    const [isResetting, setIsResetting] = useState(false);
+
+    const handleResetDatabase = () => {
+        Alert.alert(
+            "Reset Database",
+            "This will clear all tasks, subtasks, tags, and settings. Default categories will be restored. This action cannot be undone.",
+            [
+                {
+                    text: "Cancel",
+                    style: "cancel"
+                },
+                {
+                    text: "Reset",
+                    style: "destructive",
+                    onPress: async () => {
+                        setIsResetting(true);
+                        try {
+                            await resetDatabase(false);
+                            Alert.alert("Success", "Database has been reset successfully.");
+                        } catch (error) {
+                            console.error("Failed to reset database:", error);
+                            Alert.alert("Error", "Failed to reset database. Please try again.");
+                        } finally {
+                            setIsResetting(false);
+                        }
+                    }
+                }
+            ]
+        );
+    };
 
     const ThemeOption = ({ type, icon, label, isEmoji = false }: { type: 'light' | 'dark' | 'cinnamoroll', icon: any, label: string, isEmoji?: boolean }) => {
         const isActive = themeType === type;
@@ -57,6 +88,32 @@ export default function SettingsPage() {
                     <ThemeOption type="dark" icon="moon-outline" label="Dark Mode" />
                     <ThemeOption type="cinnamoroll" icon="☁️" label="Cinnamoroll" isEmoji />
                 </View>
+            </View>
+
+            <View style={styles.section}>
+                <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>DEVELOPER</Text>
+                <TouchableOpacity
+                    style={[
+                        styles.resetButton,
+                        {
+                            backgroundColor: theme.cardBg,
+                            borderColor: theme.border,
+                            borderRadius: themeType === 'cinnamoroll' ? 15 : 16,
+                        }
+                    ]}
+                    onPress={handleResetDatabase}
+                    disabled={isResetting}
+                    activeOpacity={0.7}
+                >
+                    <Ionicons
+                        name="refresh-outline"
+                        size={20}
+                        color={theme.priorityHigh}
+                    />
+                    <Text style={[styles.resetButtonText, { color: theme.priorityHigh }]}>
+                        {isResetting ? 'Resetting...' : 'Reset Database'}
+                    </Text>
+                </TouchableOpacity>
             </View>
 
             <View style={styles.section}>
@@ -155,5 +212,17 @@ const styles = StyleSheet.create({
     divider: {
         height: 1,
         marginHorizontal: 16,
+    },
+    resetButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        borderRadius: 16,
+        borderWidth: 1,
+        gap: 12,
+    },
+    resetButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
     }
 });

@@ -7,13 +7,17 @@ import {
   TouchableOpacity,
   Platform,
 } from 'react-native';
-import { Task, Category } from '@todolist/shared-types';
+import { Task, Category, ReminderPreset } from '@todolist/shared-types';
 import { Ionicons } from '@expo/vector-icons';
 import DateInput from '../toolbars/DateInput';
+import TimeInput from '../toolbars/TimeInput';
 import CategorySelector from '../toolbars/CategorySelector';
 import PrioritySelector from '../toolbars/PrioritySelector';
+import ReminderSelector from '../toolbars/ReminderSelector';
 import { getAllCategories } from '../../services';
 import ModalBase from '../ModalBase';
+import { useTheme } from '../../contexts/ThemeContext';
+import { ThemeColors } from '../../constants/Colors';
 
 type Props = {
   visible: boolean;
@@ -22,19 +26,24 @@ type Props = {
 };
 
 export default function TaskModal({ visible, onClose, onCreate }: Props) {
+  const { theme, isDark } = useTheme();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [endDate, setEndDate] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [categoryId, setCategoryId] = useState<string>('cat_personal');
   const [subtasks, setSubtasks] = useState<string[]>([]);
+  const [startTime, setStartTime] = useState('');
+  const [reminderPreset, setReminderPreset] = useState<ReminderPreset | null>(null);
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [showCategorySelector, setShowCategorySelector] = useState(false);
   const [showPrioritySelector, setShowPrioritySelector] = useState(false);
+  const [showReminderSelector, setShowReminderSelector] = useState(false);
   const [showSubtasks, setShowSubtasks] = useState(false);
 
   const dateInputRef = React.useRef<any>(null);
+  const timeInputRef = React.useRef<any>(null);
 
   const loadCategories = useCallback(async () => {
     try {
@@ -55,6 +64,8 @@ export default function TaskModal({ visible, onClose, onCreate }: Props) {
     setName('');
     setDescription('');
     setEndDate('');
+    setStartTime('');
+    setReminderPreset(null);
     setPriority('medium');
     setCategoryId('cat_personal');
     setSubtasks([]);
@@ -70,6 +81,8 @@ export default function TaskModal({ visible, onClose, onCreate }: Props) {
       description: description.trim() || null,
       priority,
       endDate: endDate ? new Date(endDate).toISOString() : null,
+      startTime: startTime ? new Date(startTime).toISOString() : null,
+      reminderPreset: reminderPreset,
       category_id: categoryId,
       createdAt: now,
       updatedAt: now,
@@ -115,52 +128,57 @@ export default function TaskModal({ visible, onClose, onCreate }: Props) {
 
   const selectedCategory = categories.find((c) => c.id === categoryId);
 
+  const inputBg = isDark ? 'rgba(255, 255, 255, 0.06)' : '#F5F5F5';
+  const secondaryChipBg = isDark ? 'rgba(255, 255, 255, 0.1)' : '#F5F5F5';
+  const buttonBg = isDark ? 'rgba(255, 255, 255, 0.08)' : '#F3F4F6';
+  const createDisabledBg = isDark ? 'rgba(255, 255, 255, 0.04)' : '#E5E7EB';
+
   return (
     <ModalBase visible={visible} onClose={onClose} useKeyboardAvoidingView maxHeight="90%">
       <View style={styles.content}>
-        <Text style={styles.title}>Create Task</Text>
+        <Text style={[styles.title, { color: theme.textPrimary }]}>Create Task</Text>
 
         <TextInput
           value={name}
           onChangeText={setName}
-          style={styles.inputTitle}
+          style={[styles.inputTitle, { backgroundColor: inputBg, color: theme.textPrimary }]}
           placeholder="Task title"
           autoFocus={Platform.OS !== 'web'}
-          placeholderTextColor="#999"
+          placeholderTextColor={theme.textTertiary}
         />
 
         <TextInput
           value={description}
           onChangeText={setDescription}
-          style={styles.inputDescription}
+          style={[styles.inputDescription, { backgroundColor: inputBg, color: theme.textPrimary }]}
           placeholder="Description (optional)"
           multiline
           numberOfLines={4}
-          placeholderTextColor="#999"
+          placeholderTextColor={theme.textTertiary}
         />
 
         {showSubtasks && (
           <View style={styles.subtasksSection}>
             <View style={styles.subtasksHeader}>
-              <Text style={styles.sectionLabel}>Subtasks</Text>
+              <Text style={[styles.sectionLabel, { color: theme.textPrimary }]}>Subtasks</Text>
               <TouchableOpacity onPress={addSubtask}>
-                <Text style={styles.addSubtaskText}>+ Add subtask</Text>
+                <Text style={[styles.addSubtaskText, { color: theme.primary }]}>+ Add subtask</Text>
               </TouchableOpacity>
             </View>
             {subtasks.map((subtask, index) => (
               <View key={index} style={styles.subtaskRow}>
                 <TouchableOpacity onPress={() => removeSubtask(index)}>
-                  <View style={styles.radioButton} />
+                  <View style={[styles.radioButton, { borderColor: theme.textSecondary }]} />
                 </TouchableOpacity>
                 <TextInput
                   value={subtask}
                   onChangeText={(val) => updateSubtask(index, val)}
-                  style={styles.subtaskText}
+                  style={[styles.subtaskText, { color: theme.textPrimary }]}
                   placeholder={`Subtask ${index + 1}`}
-                  placeholderTextColor="#999"
+                  placeholderTextColor={theme.textTertiary}
                 />
                 <TouchableOpacity onPress={() => removeSubtask(index)} style={styles.removeButtonContainer}>
-                  <Text style={styles.removeButton}>✕</Text>
+                  <Text style={[styles.removeButton, { color: theme.priorityHigh }]}>✕</Text>
                 </TouchableOpacity>
               </View>
             ))}
@@ -170,7 +188,7 @@ export default function TaskModal({ visible, onClose, onCreate }: Props) {
         {/* Toolbar with chips */}
         <View style={styles.toolbar}>
           <TouchableOpacity
-            style={[styles.toolbarChip, { backgroundColor: selectedCategory?.color || '#8B5CF6' }]}
+            style={[styles.toolbarChip, { backgroundColor: selectedCategory?.color || theme.primary }]}
             onPress={() => setShowCategorySelector(true)}
           >
             <Ionicons name="briefcase" size={16} color="#fff" />
@@ -180,48 +198,81 @@ export default function TaskModal({ visible, onClose, onCreate }: Props) {
             style={[
               styles.toolbarChip,
               subtasks.some((s) => s.trim().length > 0)
-                ? styles.toolbarChipHighlighted
-                : styles.toolbarChipSecondary,
+                ? { backgroundColor: theme.primary }
+                : { backgroundColor: secondaryChipBg },
             ]}
             onPress={toggleSubtasksSection}
           >
             <Ionicons
               name="list"
               size={16}
-              color={subtasks.some((s) => s.trim().length > 0) ? '#fff' : '#666'}
+              color={subtasks.some((s) => s.trim().length > 0) ? '#fff' : theme.textSecondary}
             />
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.toolbarChip, { backgroundColor: getPriorityColor(priority) }]}
+            style={[styles.toolbarChip, { backgroundColor: getPriorityColor(priority, theme) }]}
             onPress={() => setShowPrioritySelector(true)}
           >
             <Ionicons name="flag" size={16} color="#fff" />
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.toolbarChip, styles.toolbarChipDate]}
+            style={[
+              styles.toolbarChip,
+              { backgroundColor: inputBg, borderWidth: 1, borderColor: theme.border }
+            ]}
             onPress={() => dateInputRef.current?.openPicker()}
           >
-            <Ionicons name="calendar-outline" size={16} color="#666" />
+            <Ionicons name="calendar-outline" size={16} color={theme.textSecondary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.toolbarChip,
+              startTime
+                ? { backgroundColor: theme.primary }
+                : { backgroundColor: inputBg, borderWidth: 1, borderColor: theme.border },
+            ]}
+            onPress={() => timeInputRef.current?.openPicker()}
+          >
+            <Ionicons name="time-outline" size={16} color={startTime ? '#fff' : theme.textSecondary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.toolbarChip,
+              reminderPreset
+                ? { backgroundColor: theme.primary }
+                : { backgroundColor: secondaryChipBg },
+            ]}
+            onPress={() => setShowReminderSelector(true)}
+          >
+            <Ionicons
+              name="notifications-outline"
+              size={16}
+              color={reminderPreset ? '#fff' : theme.textSecondary}
+            />
           </TouchableOpacity>
         </View>
 
         {/* Action Buttons */}
         <View style={styles.actionsRow}>
           <TouchableOpacity
-            style={[styles.actionButton, styles.cancel]}
+            style={[styles.actionButton, { backgroundColor: buttonBg }]}
             onPress={() => {
               reset();
               onClose();
             }}
           >
-            <Text style={styles.cancelText}>Cancel</Text>
+            <Text style={[styles.cancelText, { color: theme.textSecondary }]}>Cancel</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
               styles.actionButton,
-              name.trim() ? styles.createActive : styles.create
+              name.trim()
+                ? { backgroundColor: theme.primary }
+                : { backgroundColor: createDisabledBg }
             ]}
             onPress={handleCreate}
             disabled={!name.trim()}
@@ -250,18 +301,30 @@ export default function TaskModal({ visible, onClose, onCreate }: Props) {
         visible={showPrioritySelector}
         onClose={() => setShowPrioritySelector(false)}
       />
+
+      <ReminderSelector
+        visible={showReminderSelector}
+        onClose={() => setShowReminderSelector(false)}
+        selectedPreset={reminderPreset}
+        onSelect={setReminderPreset}
+      />
+
+      {/* Hidden TimeInput for start time */}
+      <View style={{ height: 0, overflow: 'hidden' }}>
+        <TimeInput ref={timeInputRef} value={startTime} onChange={(iso: string | undefined) => setStartTime(iso ?? '')} />
+      </View>
     </ModalBase>
   );
 }
 
-function getPriorityColor(priority: 'low' | 'medium' | 'high'): string {
+function getPriorityColor(priority: 'low' | 'medium' | 'high', theme: ThemeColors): string {
   switch (priority) {
     case 'low':
-      return '#2ecc71';
+      return theme.priorityLow;
     case 'medium':
-      return '#f39c12';
+      return theme.priorityMedium;
     case 'high':
-      return '#e74c3c';
+      return theme.priorityHigh;
   }
 }
 
@@ -273,18 +336,15 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#000',
     marginBottom: 24,
   },
   inputTitle: {
     fontSize: 15,
     fontWeight: '400',
-    backgroundColor: '#F5F5F5',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 16,
     marginBottom: 16,
-    color: '#000',
     borderWidth: 0,
   },
   inputDescription: {
@@ -292,11 +352,9 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     minHeight: 100,
     textAlignVertical: 'top',
-    backgroundColor: '#F5F5F5',
     borderRadius: 8,
     padding: 16,
     marginBottom: 24,
-    color: '#000',
     borderWidth: 0,
   },
   toolbar: {
@@ -314,17 +372,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minWidth: 44,
   },
-  toolbarChipSecondary: {
-    backgroundColor: '#E8E8E8',
-  },
-  toolbarChipHighlighted: {
-    backgroundColor: '#007bff',
-  },
-  toolbarChipDate: {
-    backgroundColor: '#F5F5F5',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-  },
   actionsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -337,17 +384,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cancel: {
-    backgroundColor: '#F3F4F6',
-  },
-  create: {
-    backgroundColor: '#E5E7EB',
-  },
-  createActive: {
-    backgroundColor: '#1E3A8A',
-  },
   cancelText: {
-    color: '#6B7280',
     fontWeight: '600',
     fontSize: 16,
   },
@@ -369,7 +406,6 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#000',
   },
   subtaskRow: {
     flexDirection: 'row',
@@ -381,14 +417,12 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#666',
     marginRight: 12,
     backgroundColor: 'transparent',
   },
   subtaskText: {
     flex: 1,
     fontSize: 15,
-    color: '#000',
     padding: 0,
     borderWidth: 0,
     backgroundColor: 'transparent',
@@ -398,12 +432,10 @@ const styles = StyleSheet.create({
   },
   removeButton: {
     fontSize: 18,
-    color: '#e74c3c',
     fontWeight: '600',
   },
   addSubtaskText: {
     fontSize: 14,
-    color: '#007bff',
     fontWeight: '600',
   },
 });

@@ -474,13 +474,13 @@ const styles = StyleSheet.create({
   },
   listContentEmpty: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingBottom: 20,
   },
   emptyContainer: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
   },
   emptyText: {
     fontSize: 15,

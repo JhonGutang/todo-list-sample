@@ -1,8 +1,12 @@
-import { executeSqlAsync, getDb } from '../storage/db';
+import { executeSqlAsync, getDb, deleteDatabase, closeDb } from '../storage/db';
 import { migrations } from '../storage/migrations';
 // import { seedIfEmpty } from '../storage/seed';
 
 let initialized = false;
+
+export function resetInitializedFlag() {
+  initialized = false;
+}
 
 async function applyMigrations() {
   const db = await getDb();
@@ -46,6 +50,52 @@ export async function initDb() {
   } catch (e) {
     console.warn('DB init error', e);
     throw e;
+  }
+}
+
+/**
+ * Resets the database by clearing all user data and resetting to default state.
+ * This is useful for preparing a clean database before building an APK.
+ * 
+ * @param deleteFile - If true, completely deletes the database file and recreates it.
+ *                     If false, only clears data but keeps the schema.
+ */
+export async function resetDatabase(deleteFile: boolean = false): Promise<void> {
+  if (deleteFile) {
+    // Completely delete and recreate the database
+    await deleteDatabase();
+    // Reset initialization flag so database will be recreated on next access
+    resetInitializedFlag();
+    // Reinitialize the database (will apply migrations)
+    await initDb();
+    console.log('Database file deleted and recreated successfully');
+  } else {
+    // Just clear data but keep schema
+    const db = await getDb();
+    
+    await db.withTransactionAsync(async () => {
+      // Clear all user data
+      await db.runAsync('DELETE FROM task_tags');
+      await db.runAsync('DELETE FROM subtasks');
+      await db.runAsync('DELETE FROM pomodoro_sessions');
+      await db.runAsync('DELETE FROM tasks');
+      await db.runAsync('DELETE FROM tags');
+      await db.runAsync('DELETE FROM categories');
+      await db.runAsync('DELETE FROM settings');
+      
+      // Reset categories to defaults
+      await db.runAsync(`
+        INSERT INTO categories (id, name, color, isDefault, createdAt) VALUES
+          ('cat_personal', 'Personal', '#8b5cf6', 1, datetime('now')),
+          ('cat_work', 'Work', '#3b82f6', 1, datetime('now')),
+          ('cat_habit', 'Habit', '#10b981', 1, datetime('now')),
+          ('cat_projects', 'Projects', '#f59e0b', 1, datetime('now')),
+          ('cat_others', 'Others', '#6b7280', 1, datetime('now')),
+          ('cat_completed', 'Completed', '#94a3b8', 1, datetime('now'))
+      `);
+    });
+    
+    console.log('Database reset completed successfully');
   }
 }
 
