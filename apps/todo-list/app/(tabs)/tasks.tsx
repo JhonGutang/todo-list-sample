@@ -12,6 +12,10 @@ import { initDb, getAllCategories, createTask, setTaskCompletion, addSubtask } f
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTasks } from '../../contexts/TasksContext';
 import TaskCard from '../../components/tasks/TaskCard';
+import { getPriorityColor } from '../../utils/theme';
+import { buildFilterChips } from '../../utils/categories';
+import { applyTaskFilters } from '../../lib/task-filters';
+import { SortOrder } from '../../types/ui';
 
 export default function TasksPage() {
   const router = useRouter();
@@ -20,7 +24,7 @@ export default function TasksPage() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [filter, setFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
-  const [deadlineSort, setDeadlineSort] = useState<string>('none');
+  const [deadlineSort, setDeadlineSort] = useState<SortOrder>('none');
   const [modalVisible, setModalVisible] = useState(false);
   const [focusCount, setFocusCount] = useState(0);
   const insets = useSafeAreaInsets();
@@ -47,34 +51,12 @@ export default function TasksPage() {
     }, [loadCategories, loadTasks])
   );
 
-  const filteredTasks = tasksWithSubtasks
-    .filter((task) => {
-      if (filter === 'all') {
-        return task.category_id !== 'cat_completed';
-      }
-      return task.category_id === filter;
-    })
-    .filter((task) => {
-      if (priorityFilter === 'all') return true;
-      return task.priority === priorityFilter;
-    })
-    .sort((a, b) => {
-      if (deadlineSort === 'none') return 0;
-      const dateA = a.endDate ? new Date(a.endDate).getTime() : Infinity;
-      const dateB = b.endDate ? new Date(b.endDate).getTime() : Infinity;
-      if (deadlineSort === 'asc') return dateA - dateB;
-      else if (deadlineSort === 'desc') return dateB - dateA;
-      return 0;
-    });
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return theme.priorityHigh;
-      case 'medium': return theme.priorityMedium;
-      case 'low': return theme.priorityLow;
-      default: return 'transparent';
-    }
-  };
+  const filteredTasks = applyTaskFilters(
+    tasksWithSubtasks,
+    filter,
+    priorityFilter,
+    deadlineSort
+  );
 
   const handleToggleComplete = async (taskId: string, completed: boolean) => {
     try {
@@ -93,31 +75,17 @@ export default function TasksPage() {
         index={index}
         categories={categories}
         onToggleComplete={handleToggleComplete}
-        priorityColor={getPriorityColor(item.priority || '')}
+        priorityColor={getPriorityColor(item.priority || '', theme)}
       />
     );
   };
 
   const CATEGORY_ORDER = ['cat_personal', 'cat_work', 'cat_projects', 'cat_habit', 'cat_others'];
-
-  const filterChips = [
-    { id: 'all', label: 'All' },
-    ...categories
-      .filter((cat) => cat.id !== 'cat_completed')
-      .sort((a, b) => {
-        const idxA = CATEGORY_ORDER.indexOf(a.id);
-        const idxB = CATEGORY_ORDER.indexOf(b.id);
-        return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
-      })
-      .map((cat) => ({ id: cat.id, label: cat.name })),
-    ...categories
-      .filter((cat) => cat.id === 'cat_completed')
-      .map((cat) => ({ id: cat.id, label: cat.name })),
-  ];
+  const filterChips = buildFilterChips(categories, CATEGORY_ORDER);
 
   return (
     <View style={[styles.container, { backgroundColor: 'transparent' }]}>
-        {/* Header */}
+      {/* Header */}
       <View style={[
         styles.header,
         {

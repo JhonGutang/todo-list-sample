@@ -18,7 +18,8 @@ import ReminderSelector from '../toolbars/ReminderSelector';
 import { getAllCategories } from '../../services';
 import ModalBase from '../ModalBase';
 import { useTheme } from '../../contexts/ThemeContext';
-import { ThemeColors } from '../../constants/Colors';
+import { getPriorityColor } from '../../utils/theme';
+import { isValidTaskName } from '../../utils/validation/task';
 
 type Props = {
   visible: boolean;
@@ -74,7 +75,7 @@ export default function TaskModal({ visible, onClose, onCreate }: Props) {
   };
 
   const handleCreate = () => {
-    if (!name.trim()) return;
+    if (!isValidTaskName(name)) return;
     const now = new Date().toISOString();
     const task: Task = {
       id: String(Date.now()),
@@ -278,12 +279,12 @@ export default function TaskModal({ visible, onClose, onCreate }: Props) {
           <TouchableOpacity
             style={[
               styles.actionButton,
-              name.trim()
+              isValidTaskName(name)
                 ? { backgroundColor: theme.primary }
                 : { backgroundColor: createDisabledBg }
             ]}
             onPress={handleCreate}
-            disabled={!name.trim()}
+            disabled={!isValidTaskName(name)}
           >
             <Text style={styles.createText}>Create</Text>
           </TouchableOpacity>
@@ -323,17 +324,6 @@ export default function TaskModal({ visible, onClose, onCreate }: Props) {
       </View>
     </ModalBase>
   );
-}
-
-function getPriorityColor(priority: 'low' | 'medium' | 'high', theme: ThemeColors): string {
-  switch (priority) {
-    case 'low':
-      return theme.priorityLow;
-    case 'medium':
-      return theme.priorityMedium;
-    case 'high':
-      return theme.priorityHigh;
-  }
 }
 
 const styles = StyleSheet.create({

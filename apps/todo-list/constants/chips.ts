@@ -1,12 +1,4 @@
-export type ChipId = 'low' | 'medium' | 'high';
-export type FilterId = ChipId | 'all';
-
-export type ChipDef = {
-  id: ChipId;
-  label: string;
-  color: string; // badge background
-  chipColor?: string; // filter chip color
-};
+import { ChipDef, FilterId, ChipId } from '../types/ui';
 
 export const CHIPS: ChipDef[] = [
   { id: 'low', label: 'Low', color: '#2ecc71', chipColor: '#2ecc71' },
@@ -20,3 +12,4 @@ export const FILTER_CHIPS: { id: FilterId; label: string; color: string }[] = [
 ];
 
 export default CHIPS;
+
