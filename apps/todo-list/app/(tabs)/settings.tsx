@@ -37,7 +37,7 @@ export default function SettingsPage() {
         );
     };
 
-    const ThemeOption = ({ type, icon, label, isEmoji = false }: { type: 'light' | 'dark' | 'cinnamoroll', icon: any, label: string, isEmoji?: boolean }) => {
+    const ThemeOption = ({ type, icon, label, isEmoji = false }: { type: 'light' | 'dark' | 'lantern-night', icon: any, label: string, isEmoji?: boolean }) => {
         const isActive = themeType === type;
         return (
             <TouchableOpacity
@@ -46,7 +46,7 @@ export default function SettingsPage() {
                     {
                         backgroundColor: isActive ? theme.primary : theme.cardBg,
                         borderColor: theme.border,
-                        borderRadius: themeType === 'cinnamoroll' ? 15 : 16,
+                        borderRadius: 16,
                     },
                     isActive && styles.themeOptionActive
                 ]}
@@ -76,19 +76,19 @@ export default function SettingsPage() {
     };
 
     return (
-        <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
-            <View style={styles.header}>
-                <Text style={[styles.title, { color: theme.textPrimary }]}>Settings</Text>
-            </View>
-
-            <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>APPEARANCE</Text>
-                <View style={styles.themeContainer}>
-                    <ThemeOption type="light" icon="sunny-outline" label="Light Mode" />
-                    <ThemeOption type="dark" icon="moon-outline" label="Dark Mode" />
-                    <ThemeOption type="cinnamoroll" icon="☁️" label="Cinnamoroll" isEmoji />
+        <ScrollView style={[styles.container, { backgroundColor: 'transparent' }]}>
+                <View style={styles.header}>
+                    <Text style={[styles.title, { color: theme.textPrimary }]}>Settings</Text>
                 </View>
-            </View>
+
+                <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>APPEARANCE</Text>
+                    <View style={styles.themeContainer}>
+                        <ThemeOption type="light" icon="sunny-outline" label="Light Mode" />
+                        <ThemeOption type="dark" icon="moon-outline" label="Dark Mode" />
+                        <ThemeOption type="lantern-night" icon="🌙" label="Lantern Night" isEmoji />
+                    </View>
+                </View>
 
             <View style={styles.section}>
                 <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>DEVELOPER</Text>
@@ -98,7 +98,7 @@ export default function SettingsPage() {
                         {
                             backgroundColor: theme.cardBg,
                             borderColor: theme.border,
-                            borderRadius: themeType === 'cinnamoroll' ? 15 : 16,
+                            borderRadius: 16,
                         }
                     ]}
                     onPress={handleResetDatabase}
@@ -122,16 +122,16 @@ export default function SettingsPage() {
                     styles.aboutCard,
                     {
                         backgroundColor: theme.cardBg,
-                        borderColor: themeType === 'cinnamoroll' ? 'transparent' : theme.border,
-                        borderRadius: themeType === 'cinnamoroll' ? 15 : 16,
-                        borderWidth: themeType === 'cinnamoroll' ? 0 : 1,
+                        borderColor: theme.border,
+                        borderRadius: 16,
+                        borderWidth: 1,
                     }
                 ]}>
                     <View style={styles.aboutRow}>
                         <Text style={[styles.aboutText, { color: theme.textPrimary }]}>Version</Text>
                         <Text style={[styles.aboutValue, { color: theme.textSecondary }]}>1.0.0</Text>
                     </View>
-                    <View style={[styles.divider, { backgroundColor: theme.border, opacity: themeType === 'cinnamoroll' ? 0.3 : 1 }]} />
+                    <View style={[styles.divider, { backgroundColor: theme.border, opacity: 1 }]} />
                     <View style={styles.aboutRow}>
                         <Text style={[styles.aboutText, { color: theme.textPrimary }]}>Developed with</Text>
                         <Text style={[styles.aboutValue, { color: theme.primary }]}>JBG Dev</Text>

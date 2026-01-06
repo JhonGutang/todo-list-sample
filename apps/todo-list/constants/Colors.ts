@@ -2,6 +2,8 @@
 export type ThemeColors = {
     white: string;
     background: string;
+    backgroundImage?: any; // React Native ImageSourcePropType
+    backgroundOverlayOpacity?: number; // For readability over background images (default: 0.3)
     primary: string;
     primaryLight: string;
     primaryAccent: string;
@@ -23,6 +25,7 @@ export type ThemeColors = {
     headerBg: string;
     progressBarFill: string;
     progressBarTrack: string;
+    tabBarBg: string; // Tab bar background color
 };
 
 export const Themes = {
@@ -49,6 +52,7 @@ export const Themes = {
         headerBg: '#1E3A8A',
         progressBarFill: '#10B981',
         progressBarTrack: 'rgba(255, 255, 255, 0.2)',
+        tabBarBg: 'rgba(255, 255, 255, 0.85)',
     },
     dark: {
         white: '#FFFFFF',
@@ -73,30 +77,34 @@ export const Themes = {
         headerBg: '#1E293B',
         progressBarFill: '#34D399',
         progressBarTrack: 'rgba(255, 255, 255, 0.1)',
+        tabBarBg: 'rgba(15, 23, 42, 0.9)',
     },
-    cinnamoroll: {
+    'lantern-night': {
         white: '#FFFFFF',
-        background: '#E0F4FF',
-        primary: '#89CFF0',
-        primaryLight: '#B0E2FF',
-        primaryAccent: '#89CFF0',
-        textPrimary: '#4A5D75',
-        textSecondary: '#8FA3B8',
-        textTertiary: '#B0C4DE',
-        border: '#EEDC9A',
-        priorityHigh: '#DDA0DD',
-        priorityMedium: '#ADD8E6',
-        priorityLow: '#98FB98',
-        success: '#98FB98',
-        cardBg: '#FFFFFF',
-        cardBgCompleted: '#F0F8FF',
-        glassBg: 'rgba(255, 255, 255, 0.8)',
-        cardRadius: 20,
-        cardBorderWidth: 1.5,
-        shadowColor: 'rgba(137, 207, 240, 0.25)',
-        headerBg: '#89CFF0',
-        progressBarFill: '#FDFD96',
-        progressBarTrack: 'rgba(255, 255, 255, 0.3)',
+        background: '#1A1B2E', // Deep Navy - fallback color
+        backgroundImage: require('../assets/themes-bg/lantern-theme.jpg'),
+        backgroundOverlayOpacity: 0.5, // Darker overlay for better readability
+        primary: '#FFD54F', // Gold/Amber
+        primaryLight: '#FFB74D', // Soft Orange
+        primaryAccent: '#FFD54F',
+        textPrimary: '#FFFFFF',
+        textSecondary: '#B0B3C6',
+        textTertiary: '#64748B',
+        border: 'rgba(255, 255, 255, 0.1)',
+        priorityHigh: '#BA68C8', // Personal (Light Purple)
+        priorityMedium: '#64B5F6', // Work (Light Blue)
+        priorityLow: '#81C784', // Habit (Soft Green)
+        success: '#81C784',
+        cardBg: 'rgba(28, 28, 46, 0.75)', // Glassmorphism
+        cardBgCompleted: 'rgba(28, 28, 46, 0.5)',
+        glassBg: 'rgba(28, 28, 46, 0.8)',
+        cardRadius: 16,
+        cardBorderWidth: 1,
+        shadowColor: '#FFAB00', // Glow effect
+        headerBg: 'rgba(28, 28, 46, 0.75)',
+        progressBarFill: '#FFD54F',
+        progressBarTrack: 'rgba(255, 255, 255, 0.1)',
+        tabBarBg: 'rgba(0, 0, 0, 0.3)',
     }
 };
 

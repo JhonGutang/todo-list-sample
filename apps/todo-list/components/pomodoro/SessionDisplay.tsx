@@ -33,14 +33,14 @@ export default function SessionDisplay({ session, onCancel }: SessionDisplayProp
                 {/* Header Row: Timer Type Badge + Progress Counter + Cancel Icon */}
                 <View style={styles.headerRow}>
                     <View style={[styles.badge, { backgroundColor: progressColor }]}>
-                        <Text style={[styles.badgeText, { color: themeType === 'cinnamoroll' ? theme.textPrimary : theme.white }]}>{timerTypeLabel}</Text>
+                        <Text style={[styles.badgeText, { color: theme.white }]}>{timerTypeLabel}</Text>
                     </View>
                     <View style={styles.headerRight}>
                         <View style={[styles.progressCounter, { backgroundColor: theme.background }]}>
                             <Text style={[styles.progressCounterText, { color: theme.textPrimary }]}>{current_iteration}/{total_iterations}</Text>
                         </View>
                         <TouchableOpacity
-                            style={[styles.cancelButton, { backgroundColor: themeType === 'cinnamoroll' ? 'rgba(255, 107, 107, 0.1)' : '#fef2f2' }]}
+                            style={[styles.cancelButton, { backgroundColor: '#fef2f2' }]}
                             onPress={onCancel}
                         >
                             <FontAwesome name="times" size={18} color={theme.priorityHigh} />

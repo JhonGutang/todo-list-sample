@@ -3,7 +3,7 @@ import { useColorScheme } from 'react-native';
 import { Themes, ThemeColors } from '../constants/Colors';
 import { getSetting, setSetting } from '../services/settings';
 
-type ThemeType = 'light' | 'dark' | 'cinnamoroll';
+type ThemeType = 'light' | 'dark' | 'lantern-night';
 
 interface ThemeContextType {
     theme: ThemeColors;
@@ -23,7 +23,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         const loadTheme = async () => {
             try {
                 const storedTheme = await getSetting('theme');
-                if (storedTheme === 'light' || storedTheme === 'dark' || storedTheme === 'cinnamoroll') {
+                if (storedTheme === 'light' || storedTheme === 'dark' || storedTheme === 'lantern-night') {
                     setThemeType(storedTheme as ThemeType);
                 } else if (systemColorScheme) {
                     setThemeType(systemColorScheme as ThemeType);
@@ -46,7 +46,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
 
     const theme = Themes[themeType];
-    const isDark = themeType === 'dark';
+    const isDark = themeType === 'dark' || themeType === 'lantern-night';
 
     return (
         <ThemeContext.Provider value={{ theme, themeType, setTheme: handleSetTheme, isDark }}>

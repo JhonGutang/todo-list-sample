@@ -23,12 +23,7 @@ const TaskCard = ({ item, index, categories, onToggleComplete, priorityColor }: 
 
     const dateLabel = formatRange(item.startDate ?? undefined, item.endDate ?? undefined);
     const category = categories.find((c) => c.id === item.category_id);
-    const categoryColor = themeType === 'cinnamoroll'
-        ? (category?.id === 'cat_habit' ? theme.priorityLow :
-            category?.id === 'cat_work' ? theme.priorityMedium :
-                category?.id === 'cat_personal' ? theme.priorityHigh :
-                    category?.color || theme.textSecondary)
-        : category?.color || theme.textSecondary;
+    const categoryColor = category?.color || theme.textSecondary;
     const categoryName = category?.name || 'Uncategorized';
 
     const handleToggleComplete = async (e: any) => {
@@ -49,11 +44,6 @@ const TaskCard = ({ item, index, categories, onToggleComplete, priorityColor }: 
                         borderColor: theme.border,
                         borderRadius: theme.cardRadius,
                         borderWidth: theme.cardBorderWidth,
-                        shadowColor: theme.shadowColor,
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 1,
-                        shadowRadius: 12,
-                        elevation: 4,
                     },
                     item.completed && styles.cardCompleted,
                     pressed && styles.cardPressed
@@ -74,16 +64,16 @@ const TaskCard = ({ item, index, categories, onToggleComplete, priorityColor }: 
                         <View style={[
                             styles.checkbox,
                             {
-                                borderColor: themeType === 'cinnamoroll' ? '#B0C4DE' : theme.border,
+                                borderColor: theme.border,
                                 backgroundColor: theme.cardBg,
-                                borderRadius: themeType === 'cinnamoroll' ? 10 : 12, // More cloud-like or just rounded
+                                borderRadius: 12,
                             },
                             item.completed && {
                                 borderColor: theme.primary,
-                                backgroundColor: isDark ? theme.primary : (themeType === 'cinnamoroll' ? theme.primary : '#EFF6FF')
+                                backgroundColor: isDark ? theme.primary : '#EFF6FF'
                             }
                         ]}>
-                            {item.completed && <Ionicons name={themeType === 'cinnamoroll' ? "star" : "checkmark"} size={16} color={isDark || themeType === 'cinnamoroll' ? theme.white : theme.primary} />}
+                            {item.completed && <Ionicons name="checkmark" size={16} color={isDark ? theme.white : theme.primary} />}
                         </View>
                     </Pressable>
 

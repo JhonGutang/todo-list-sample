@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/contexts/ThemeContext';
+import { ThemeBackground } from '@/components/ThemeBackground';
 
 export default function Index() {
   const router = useRouter();
@@ -16,12 +17,14 @@ export default function Index() {
   }, [router]);
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={styles.content}>
-        <Text style={[styles.logo, { color: theme.primary }]}>Momentum</Text>
-        <Text style={[styles.creator, { color: theme.textSecondary }]}>Created by JBG Dev</Text>
+    <ThemeBackground>
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <Text style={[styles.logo, { color: theme.primary }]}>Momentum</Text>
+          <Text style={[styles.creator, { color: theme.textSecondary }]}>Created by JBG Dev</Text>
+        </View>
       </View>
-    </View>
+    </ThemeBackground>
   );
 }
 

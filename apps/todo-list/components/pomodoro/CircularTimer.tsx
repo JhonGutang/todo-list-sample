@@ -162,12 +162,12 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
                                 {
                                     backgroundColor: theme.cardBg,
                                     borderColor: theme.border,
-                                    borderWidth: themeType === 'cinnamoroll' ? 1.5 : 1,
-                                    borderRadius: themeType === 'cinnamoroll' ? 50 : 20,
+                                    borderWidth: 1,
+                                    borderRadius: 20,
                                 },
                                 totalSeconds === 25 * 60 && {
-                                    backgroundColor: themeType === 'cinnamoroll' ? theme.white : theme.primary,
-                                    borderWidth: themeType === 'cinnamoroll' ? 1.5 : 0
+                                    backgroundColor: theme.primary,
+                                    borderWidth: 0
                                 },
                                 isRunning && styles.presetDisabled
                             ]}
@@ -178,7 +178,7 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
                             <Text style={[
                                 styles.presetText,
                                 { color: theme.textSecondary },
-                                totalSeconds === 25 * 60 && { color: themeType === 'cinnamoroll' ? '#000000' : theme.white },
+                                totalSeconds === 25 * 60 && { color: theme.white },
                                 isRunning && { color: theme.textTertiary }
                             ]}>25m</Text>
                         </TouchableOpacity>
@@ -188,12 +188,12 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
                                 {
                                     backgroundColor: theme.cardBg,
                                     borderColor: theme.border,
-                                    borderWidth: themeType === 'cinnamoroll' ? 1.5 : 1,
-                                    borderRadius: themeType === 'cinnamoroll' ? 50 : 20,
+                                    borderWidth: 1,
+                                    borderRadius: 20,
                                 },
                                 totalSeconds === 15 * 60 && {
-                                    backgroundColor: themeType === 'cinnamoroll' ? theme.white : theme.primary,
-                                    borderWidth: themeType === 'cinnamoroll' ? 1.5 : 0
+                                    backgroundColor: theme.primary,
+                                    borderWidth: 0
                                 },
                                 isRunning && styles.presetDisabled
                             ]}
@@ -204,7 +204,7 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
                             <Text style={[
                                 styles.presetText,
                                 { color: theme.textSecondary },
-                                totalSeconds === 15 * 60 && { color: themeType === 'cinnamoroll' ? '#000000' : theme.white },
+                                totalSeconds === 15 * 60 && { color: theme.white },
                                 isRunning && { color: theme.textTertiary }
                             ]}>15m</Text>
                         </TouchableOpacity>
@@ -214,12 +214,12 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
                                 {
                                     backgroundColor: theme.cardBg,
                                     borderColor: theme.border,
-                                    borderWidth: themeType === 'cinnamoroll' ? 1.5 : 1,
-                                    borderRadius: themeType === 'cinnamoroll' ? 50 : 20,
+                                    borderWidth: 1,
+                                    borderRadius: 20,
                                 },
                                 totalSeconds === 5 * 60 && {
-                                    backgroundColor: themeType === 'cinnamoroll' ? theme.white : theme.primary,
-                                    borderWidth: themeType === 'cinnamoroll' ? 1.5 : 0
+                                    backgroundColor: theme.primary,
+                                    borderWidth: 0
                                 },
                                 isRunning && styles.presetDisabled
                             ]}
@@ -230,7 +230,7 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
                             <Text style={[
                                 styles.presetText,
                                 { color: theme.textSecondary },
-                                totalSeconds === 5 * 60 && { color: themeType === 'cinnamoroll' ? '#000000' : theme.white },
+                                totalSeconds === 5 * 60 && { color: theme.white },
                                 isRunning && { color: theme.textTertiary }
                             ]}>5m</Text>
                         </TouchableOpacity>
@@ -239,20 +239,12 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
                     {/* Circular Timer */}
                     <View style={styles.circularTimerContainer}>
                         <Svg width={circleSize} height={circleSize} style={styles.circularTimer}>
-                            {themeType === 'cinnamoroll' && (
-                                <Defs>
-                                    <LinearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <Stop offset="0%" stopColor="#89CFF0" />
-                                        <Stop offset="100%" stopColor="#DDA0DD" />
-                                    </LinearGradient>
-                                </Defs>
-                            )}
                             {/* Background Circle */}
                             <Circle
                                 cx={circleSize / 2}
                                 cy={circleSize / 2}
                                 r={radius}
-                                stroke={themeType === 'cinnamoroll' ? 'rgba(255,255,255,0.4)' : theme.border}
+                                stroke={theme.border}
                                 strokeWidth={strokeWidth}
                                 fill="none"
                             />
@@ -261,7 +253,7 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
                                 cx={circleSize / 2}
                                 cy={circleSize / 2}
                                 r={radius}
-                                stroke={themeType === 'cinnamoroll' ? "url(#timerGradient)" : theme.primary}
+                                stroke={theme.primary}
                                 strokeWidth={strokeWidth}
                                 fill="none"
                                 strokeDasharray={circumference}
@@ -274,9 +266,6 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
 
                         {/* Timer Display */}
                         <View style={styles.timerTextContainer}>
-                            {themeType === 'cinnamoroll' && (
-                                <Text style={{ fontSize: 40, marginBottom: -10 }}>😴</Text>
-                            )}
                             <Text style={[styles.focusTimerText, { color: theme.textPrimary }]}>
                                 {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
                             </Text>
@@ -293,7 +282,7 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
                                     backgroundColor: theme.cardBg,
                                     borderColor: theme.border,
                                     borderWidth: 1,
-                                    borderRadius: themeType === 'cinnamoroll' ? 15 : 28
+                                    borderRadius: 28
                                 }
                             ]}
                             onPress={reset}
@@ -307,7 +296,7 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
                                 {
                                     backgroundColor: theme.primary,
                                     shadowColor: theme.primary,
-                                    borderRadius: themeType === 'cinnamoroll' ? 30 : 20, // More cloud-like for Cinnamoroll
+                                    borderRadius: 20,
                                 },
                                 displayIsRunning && { backgroundColor: '#FF6B6B', shadowColor: '#FF6B6B' }
                             ]}
@@ -330,20 +319,12 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
                     {/* Circular Timer */}
                     <View style={styles.circularTimerContainer}>
                         <Svg width={circleSize} height={circleSize} style={styles.circularTimer}>
-                            {themeType === 'cinnamoroll' && (
-                                <Defs>
-                                    <LinearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <Stop offset="0%" stopColor="#89CFF0" />
-                                        <Stop offset="100%" stopColor="#DDA0DD" />
-                                    </LinearGradient>
-                                </Defs>
-                            )}
                             {/* Background Circle */}
                             <Circle
                                 cx={circleSize / 2}
                                 cy={circleSize / 2}
                                 r={radius}
-                                stroke={themeType === 'cinnamoroll' ? 'rgba(255,255,255,0.4)' : theme.border}
+                                stroke={theme.border}
                                 strokeWidth={strokeWidth}
                                 fill="none"
                             />
@@ -352,7 +333,7 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
                                 cx={circleSize / 2}
                                 cy={circleSize / 2}
                                 r={radius}
-                                stroke={themeType === 'cinnamoroll' ? "url(#timerGradient)" : theme.primary}
+                                stroke={theme.primary}
                                 strokeWidth={strokeWidth}
                                 fill="none"
                                 strokeDasharray={circumference}
@@ -365,14 +346,11 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
 
                         {/* Timer Display */}
                         <View style={styles.timerTextContainer}>
-                            {themeType === 'cinnamoroll' && (
-                                <Text style={{ fontSize: 40, marginBottom: -10 }}>🐶</Text>
-                            )}
                             <Text style={[styles.timerText, { color: theme.textPrimary }]}>
                                 {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
                             </Text>
                             {getProgressText() && (
-                                <Text style={[styles.progressText, { color: themeType === 'cinnamoroll' ? '#89CFF0' : theme.primary }]}>{getProgressText()}</Text>
+                                <Text style={[styles.progressText, { color: theme.primary }]}>{getProgressText()}</Text>
                             )}
                             <Text style={[styles.timerLabel, { color: theme.textSecondary }]}>
                                 {displayIsRunning ? 'In Progress' : 'Paused'}
@@ -388,7 +366,7 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
                                 {
                                     backgroundColor: theme.primary,
                                     shadowColor: theme.primary,
-                                    borderRadius: themeType === 'cinnamoroll' ? 30 : 20,
+                                    borderRadius: 20,
                                 },
                                 displayIsRunning && { backgroundColor: '#FF6B6B', shadowColor: '#FF6B6B' }
                             ]}

@@ -53,21 +53,21 @@ export default function SessionConfig({
                     {
                         backgroundColor: theme.cardBg,
                         borderColor: theme.success,
-                        borderRadius: themeType === 'cinnamoroll' ? 20 : 12,
-                        borderWidth: themeType === 'cinnamoroll' ? 3 : 2
+                        borderRadius: 12,
+                        borderWidth: 2
                     }
                 ]}>
                     <View style={styles.selectedTaskInfo}>
                         <Text style={[styles.selectedTaskName, { color: theme.textPrimary }]}>{selectedTask.name}</Text>
                         {subtaskCount > 0 && (
-                            <View style={[styles.subtaskBadge, { backgroundColor: themeType === 'cinnamoroll' ? theme.background : 'rgba(99, 102, 241, 0.1)' }]}>
+                            <View style={[styles.subtaskBadge, { backgroundColor: 'rgba(99, 102, 241, 0.1)' }]}>
                                 <FontAwesome name="list" size={10} color={theme.primary} />
                                 <Text style={[styles.subtaskBadgeText, { color: theme.primary }]}>{subtaskCount} subtask{subtaskCount > 1 ? 's' : ''}</Text>
                             </View>
                         )}
                     </View>
                     <TouchableOpacity
-                        style={[styles.changeButton, { backgroundColor: theme.background, borderRadius: themeType === 'cinnamoroll' ? 12 : 8 }]}
+                        style={[styles.changeButton, { backgroundColor: theme.background, borderRadius: 8 }]}
                         onPress={onChangeTask}
                     >
                         <FontAwesome name="pencil" size={14} color={theme.textSecondary} />
@@ -99,7 +99,7 @@ export default function SessionConfig({
                                     {
                                         backgroundColor: theme.cardBg,
                                         borderColor: theme.border,
-                                        borderRadius: themeType === 'cinnamoroll' ? 20 : 12,
+                                        borderRadius: 12,
                                     },
                                     duration === option.value && {
                                         backgroundColor: theme.primary,
@@ -111,14 +111,14 @@ export default function SessionConfig({
                                 <Text style={[
                                     styles.durationValue,
                                     { color: theme.textPrimary },
-                                    duration === option.value && { color: themeType === 'cinnamoroll' ? theme.textPrimary : theme.white },
+                                    duration === option.value && { color: theme.white },
                                 ]}>
                                     {option.label}
                                 </Text>
                                 <Text style={[
                                     styles.durationUnit,
                                     { color: theme.textTertiary },
-                                    duration === option.value && { color: themeType === 'cinnamoroll' ? theme.textSecondary : 'rgba(255,255,255,0.8)' },
+                                    duration === option.value && { color: 'rgba(255,255,255,0.8)' },
                                 ]}>
                                     {option.sublabel}
                                 </Text>
@@ -140,7 +140,7 @@ export default function SessionConfig({
                                         {
                                             backgroundColor: theme.cardBg,
                                             borderColor: theme.border,
-                                            borderRadius: themeType === 'cinnamoroll' ? 12 : 10,
+                                            borderRadius: 10,
                                         },
                                         iterations === num && {
                                             backgroundColor: theme.primary,
@@ -152,7 +152,7 @@ export default function SessionConfig({
                                     <Text style={[
                                         styles.iterationText,
                                         { color: theme.textPrimary },
-                                        iterations === num && { color: themeType === 'cinnamoroll' ? theme.textPrimary : theme.white },
+                                        iterations === num && { color: theme.white },
                                     ]}>
                                         {num}
                                     </Text>
@@ -172,7 +172,7 @@ export default function SessionConfig({
                                 {
                                     backgroundColor: theme.cardBg,
                                     borderColor: theme.border,
-                                    borderRadius: themeType === 'cinnamoroll' ? 20 : 12,
+                                    borderRadius: 12,
                                 },
                                 breakType === 'short' && {
                                     backgroundColor: theme.primary,
@@ -184,19 +184,19 @@ export default function SessionConfig({
                             <FontAwesome
                                 name="coffee"
                                 size={16}
-                                color={breakType === 'short' ? (themeType === 'cinnamoroll' ? theme.textPrimary : theme.white) : theme.textSecondary}
+                                color={breakType === 'short' ? theme.white : theme.textSecondary}
                             />
                             <Text style={[
                                 styles.breakText,
                                 { color: theme.textPrimary },
-                                breakType === 'short' && { color: themeType === 'cinnamoroll' ? theme.textPrimary : theme.white },
+                                breakType === 'short' && { color: theme.white },
                             ]}>
                                 Short
                             </Text>
                             <Text style={[
                                 styles.breakDuration,
                                 { color: theme.textTertiary },
-                                breakType === 'short' && { color: themeType === 'cinnamoroll' ? theme.textSecondary : 'rgba(255,255,255,0.8)' },
+                                breakType === 'short' && { color: 'rgba(255,255,255,0.8)' },
                             ]}>
                                 2 min
                             </Text>
@@ -207,7 +207,7 @@ export default function SessionConfig({
                                 {
                                     backgroundColor: theme.cardBg,
                                     borderColor: theme.border,
-                                    borderRadius: themeType === 'cinnamoroll' ? 20 : 12,
+                                    borderRadius: 12,
                                 },
                                 breakType === 'long' && {
                                     backgroundColor: theme.primary,
@@ -219,19 +219,19 @@ export default function SessionConfig({
                             <FontAwesome
                                 name="bed"
                                 size={16}
-                                color={breakType === 'long' ? (themeType === 'cinnamoroll' ? theme.textPrimary : theme.white) : theme.textSecondary}
+                                color={breakType === 'long' ? theme.white : theme.textSecondary}
                             />
                             <Text style={[
                                 styles.breakText,
                                 { color: theme.textPrimary },
-                                breakType === 'long' && { color: themeType === 'cinnamoroll' ? theme.textPrimary : theme.white },
+                                breakType === 'long' && { color: theme.white },
                             ]}>
                                 Long
                             </Text>
                             <Text style={[
                                 styles.breakDuration,
                                 { color: theme.textTertiary },
-                                breakType === 'long' && { color: themeType === 'cinnamoroll' ? theme.textSecondary : 'rgba(255,255,255,0.8)' },
+                                breakType === 'long' && { color: 'rgba(255,255,255,0.8)' },
                             ]}>
                                 5 min
                             </Text>
@@ -240,7 +240,7 @@ export default function SessionConfig({
                 </View>
 
                 {/* Summary */}
-                <View style={[styles.summaryCard, { backgroundColor: theme.background, borderRadius: themeType === 'cinnamoroll' ? 20 : 12 }]}>
+                <View style={[styles.summaryCard, { backgroundColor: theme.background, borderRadius: 12 }]}>
                     <View style={styles.summaryRow}>
                         <Text style={[styles.summaryLabel, { color: theme.textSecondary }]}>Total Focus Time</Text>
                         <Text style={[styles.summaryValue, { color: theme.textPrimary }]}>{duration * iterations} min</Text>
@@ -257,15 +257,15 @@ export default function SessionConfig({
                         styles.startButton,
                         {
                             backgroundColor: theme.primary,
-                            borderRadius: themeType === 'cinnamoroll' ? 30 : 14,
+                            borderRadius: 14,
                             shadowColor: theme.primary
                         }
                     ]}
                     onPress={onStartSession}
                     activeOpacity={0.85}
                 >
-                    <FontAwesome name="play-circle" size={22} color={themeType === 'cinnamoroll' ? theme.textPrimary : theme.white} />
-                    <Text style={[styles.startButtonText, { color: themeType === 'cinnamoroll' ? theme.textPrimary : theme.white }]}>Start Session</Text>
+                    <FontAwesome name="play-circle" size={22} color={theme.white} />
+                    <Text style={[styles.startButtonText, { color: theme.white }]}>Start Session</Text>
                 </TouchableOpacity>
             </Animated.View>
         </View>

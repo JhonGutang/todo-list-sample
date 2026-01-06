@@ -109,21 +109,21 @@ export default function PomodoroTimerPage() {
     const effectiveMode = hasActiveSession ? 'task' : mode;
 
     return (
-        <View style={[styles.container, { backgroundColor: theme.background }]}>
-            {/* Tab Navigation */}
+        <View style={[styles.container, { backgroundColor: 'transparent' }]}>
+                {/* Tab Navigation */}
             <View style={[
                 styles.tabContainer,
                 {
                     backgroundColor: theme.cardBg,
                     borderColor: theme.border,
                     borderWidth: theme.cardBorderWidth,
-                    borderRadius: themeType === 'cinnamoroll' ? 30 : 16
+                    borderRadius: 16
                 }
             ]}>
                 <TouchableOpacity
                     style={[
                         styles.tab,
-                        { borderRadius: themeType === 'cinnamoroll' ? 25 : 12 },
+                        { borderRadius: 12 },
                         effectiveMode === 'focus' && { backgroundColor: theme.primary },
                         (isTimerRunning || hasActiveSession) && effectiveMode !== 'focus' && styles.tabDisabled
                     ]}
@@ -134,13 +134,13 @@ export default function PomodoroTimerPage() {
                     <FontAwesome
                         name="clock-o"
                         size={18}
-                        color={effectiveMode === 'focus' ? (themeType === 'cinnamoroll' ? theme.textPrimary : theme.white) : (isTimerRunning || hasActiveSession) ? theme.border : theme.textSecondary}
+                        color={effectiveMode === 'focus' ? theme.white : (isTimerRunning || hasActiveSession) ? theme.border : theme.textSecondary}
                         style={styles.tabIcon}
                     />
                     <Text style={[
                         styles.tabText,
                         { color: theme.textSecondary },
-                        effectiveMode === 'focus' && { color: themeType === 'cinnamoroll' ? theme.textPrimary : theme.white, fontWeight: '700' },
+                        effectiveMode === 'focus' && { color: theme.white, fontWeight: '700' },
                         (isTimerRunning || hasActiveSession) && effectiveMode !== 'focus' && { color: theme.border }
                     ]}>
                         Focus Timer
@@ -150,7 +150,7 @@ export default function PomodoroTimerPage() {
                 <TouchableOpacity
                     style={[
                         styles.tab,
-                        { borderRadius: themeType === 'cinnamoroll' ? 25 : 12 },
+                        { borderRadius: 12 },
                         effectiveMode === 'task' && { backgroundColor: theme.primary },
                         (isTimerRunning || hasActiveSession) && effectiveMode !== 'task' && styles.tabDisabled
                     ]}
@@ -161,13 +161,13 @@ export default function PomodoroTimerPage() {
                     <FontAwesome
                         name="tasks"
                         size={18}
-                        color={effectiveMode === 'task' ? (themeType === 'cinnamoroll' ? theme.textPrimary : theme.white) : (isTimerRunning || hasActiveSession) ? theme.border : theme.textSecondary}
+                        color={effectiveMode === 'task' ? theme.white : (isTimerRunning || hasActiveSession) ? theme.border : theme.textSecondary}
                         style={styles.tabIcon}
                     />
                     <Text style={[
                         styles.tabText,
                         { color: theme.textSecondary },
-                        effectiveMode === 'task' && { color: themeType === 'cinnamoroll' ? theme.textPrimary : theme.white, fontWeight: '700' },
+                        effectiveMode === 'task' && { color: theme.white, fontWeight: '700' },
                         (isTimerRunning || hasActiveSession) && effectiveMode !== 'task' && { color: theme.border }
                     ]}>
                         Task Timer

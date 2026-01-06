@@ -134,40 +134,36 @@ export default function TasksPage() {
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* Header */}
+    <View style={[styles.container, { backgroundColor: 'transparent' }]}>
+        {/* Header */}
       <View style={[
         styles.header,
         {
           paddingHorizontal: horizontalPadding,
-          backgroundColor: themeType === 'cinnamoroll' ? theme.headerBg : 'transparent',
-          paddingVertical: themeType === 'cinnamoroll' ? 16 : 0,
-          paddingTop: themeType === 'cinnamoroll' ? 20 : 16,
+          backgroundColor: 'transparent',
+          paddingVertical: 0,
+          paddingTop: 16,
         }
       ]}>
         <View style={styles.headerTop}>
           <View style={styles.logoContainer}>
-            <View style={[styles.logo, { backgroundColor: themeType === 'cinnamoroll' ? theme.white : theme.primary }]}>
-              {themeType === 'cinnamoroll' ? (
-                <Text style={{ fontSize: 20 }}>☁️</Text>
-              ) : (
-                <Text style={[styles.logoText, { color: theme.white }]}>M</Text>
-              )}
+            <View style={[styles.logo, { backgroundColor: theme.primary }]}>
+              <Text style={[styles.logoText, { color: theme.white }]}>M</Text>
             </View>
-            <Text style={[styles.headerTitle, { color: themeType === 'cinnamoroll' ? theme.white : theme.textPrimary }]}>Tasks</Text>
+            <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>Tasks</Text>
           </View>
           <Pressable
             style={[
               styles.addButton,
               {
                 backgroundColor: theme.cardBg,
-                borderColor: themeType === 'cinnamoroll' ? 'transparent' : theme.border,
-                borderWidth: themeType === 'cinnamoroll' ? 0 : 1,
+                borderColor: theme.border,
+                borderWidth: 1,
                 shadowColor: theme.shadowColor,
                 shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: themeType === 'cinnamoroll' ? 1 : 0,
+                shadowOpacity: 0,
                 shadowRadius: 4,
-                elevation: themeType === 'cinnamoroll' ? 4 : 0,
+                elevation: 0,
               }
             ]}
             onPress={() => setModalVisible(true)}
@@ -175,23 +171,9 @@ export default function TasksPage() {
             <Ionicons name="add" size={24} color={theme.primary} />
           </Pressable>
         </View>
-        <Text style={[styles.headerSubtitle, { color: themeType === 'cinnamoroll' ? 'rgba(255,255,255,0.8)' : theme.textSecondary }]}>
+        <Text style={[styles.headerSubtitle, { color: theme.textSecondary }]}>
           {completedCount} of {totalCount} completed
         </Text>
-
-        {/* Progress Bar for Cinnamoroll */}
-        {themeType === 'cinnamoroll' && (
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBarTrack, { backgroundColor: theme.progressBarTrack }]} />
-            <View style={[
-              styles.progressBarFill,
-              {
-                backgroundColor: theme.progressBarFill,
-                width: `${progress * 100}%`
-              }
-            ]} />
-          </View>
-        )}
       </View>
 
       {/* Category Filter Pills */}
@@ -210,14 +192,14 @@ export default function TasksPage() {
                 styles.categoryPill,
                 {
                   backgroundColor: theme.cardBg,
-                  borderColor: themeType === 'cinnamoroll' ? theme.border : theme.border,
-                  borderWidth: themeType === 'cinnamoroll' ? 1.5 : 1,
-                  borderRadius: themeType === 'cinnamoroll' ? 50 : 24,
+                  borderColor: theme.border,
+                  borderWidth: 1,
+                  borderRadius: 24,
                 },
                 active && {
-                  backgroundColor: themeType === 'cinnamoroll' ? theme.white : theme.primary,
-                  borderColor: themeType === 'cinnamoroll' ? theme.border : 'transparent',
-                  borderWidth: themeType === 'cinnamoroll' ? 1.5 : 0
+                  backgroundColor: theme.primary,
+                  borderColor: 'transparent',
+                  borderWidth: 0
                 }
               ]}
               onPress={() => setFilter(chip.id)}
@@ -225,7 +207,7 @@ export default function TasksPage() {
               <Text style={[
                 styles.categoryPillText,
                 { color: theme.textSecondary },
-                active && { color: themeType === 'cinnamoroll' ? '#000000' : theme.white }
+                active && { color: theme.white }
               ]}>
                 {chip.label}
               </Text>
@@ -266,7 +248,7 @@ export default function TasksPage() {
                     : priorityFilter === 'low'
                       ? theme.priorityLow
                       : theme.border,
-              borderRadius: themeType === 'cinnamoroll' ? 50 : 12,
+              borderRadius: 12,
             },
           ]}
           onPress={() => {
@@ -300,15 +282,6 @@ export default function TasksPage() {
 
       {/* Task List */}
       <View style={{ flex: 1 }}>
-        {themeType === 'cinnamoroll' && (
-          <View style={StyleSheet.absoluteFill} pointerEvents="none">
-            <Text style={{ position: 'absolute', top: 50, right: 30, fontSize: 40, opacity: 0.2 }}>☁️</Text>
-            <Text style={{ position: 'absolute', top: 200, left: -20, fontSize: 60, opacity: 0.1 }}>☁️</Text>
-            <Text style={{ position: 'absolute', bottom: 100, right: -10, fontSize: 50, opacity: 0.1 }}>☁️</Text>
-            <Text style={{ position: 'absolute', top: 120, left: 150, fontSize: 20, opacity: 0.3 }}>✨</Text>
-            <Text style={{ position: 'absolute', bottom: 250, left: 40, fontSize: 15, opacity: 0.3 }}>✨</Text>
-          </View>
-        )}
         <FlatList
           data={filteredTasks}
           keyExtractor={(item) => `${item.id}-${filter}-${priorityFilter}-${deadlineSort}-${focusCount}`}

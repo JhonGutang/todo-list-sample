@@ -3,34 +3,30 @@ import { Ionicons } from '@expo/vector-icons';
 import { TimerProvider, useTimer } from '@/contexts/TimerContext';
 import { Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors } from '@/constants/Colors';
+import { useTheme } from '@/contexts/ThemeContext';
 
 function TabsContent() {
   const { isTimerRunning } = useTimer();
+  const { theme, themeType } = useTheme();
 
   return (
-    <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
+    <SafeAreaView edges={['bottom']} style={{ flex: 1, backgroundColor: 'transparent' }}>
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: Colors.primary,
-          tabBarInactiveTintColor: Colors.textSecondary,
+          tabBarActiveTintColor: theme.primary,
+          tabBarInactiveTintColor: theme.textSecondary,
+          sceneStyle: { backgroundColor: 'transparent' },
           tabBarStyle: {
-            backgroundColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.85)' : 'transparent',
+            backgroundColor: theme.tabBarBg,
             borderTopWidth: 0,
             elevation: 0,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
+            shadowColor: 'transparent',
             height: 70,
             paddingBottom: 8,
             paddingTop: 0,
             justifyContent: 'center',
             alignItems: 'center',
-            ...(Platform.OS === 'ios' && {
-              backdropFilter: 'blur(10px)',
-            }),
           },
           tabBarItemStyle: {
             paddingVertical: 4,
@@ -47,6 +43,10 @@ function TabsContent() {
           tabBarIconStyle: {
             marginTop: 2,
             alignSelf: 'center',
+            shadowColor: themeType === 'lantern-night' ? theme.shadowColor : 'transparent',
+            shadowOffset: { width: 0, height: 0 },
+            shadowOpacity: themeType === 'lantern-night' ? 0.8 : 0,
+            shadowRadius: themeType === 'lantern-night' ? 10 : 0,
           },
         }}
         screenListeners={({ navigation, route }) => ({
@@ -99,6 +99,19 @@ function TabsContent() {
             tabBarIcon: ({ color, size, focused }) => (
               <Ionicons
                 name={focused ? "settings" : "settings-outline"}
+                color={color}
+                size={24}
+              />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="sample"
+          options={{
+            title: 'Sample',
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons
+                name={focused ? "layers" : "layers-outline"}
                 color={color}
                 size={24}
               />

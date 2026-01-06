@@ -4,6 +4,7 @@ import { StyleSheet, StatusBar } from "react-native";
 import { TimerProvider } from "@/contexts/TimerContext";
 import { PomodoroProvider } from "@/contexts/PomodoroContext";
 import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
+import { ThemeBackground } from "@/components/ThemeBackground";
 import { useEffect, useState } from "react";
 import * as Notifications from 'expo-notifications';
 import { setupNotificationHandler } from "@/services/notifications";
@@ -50,24 +51,26 @@ function RootLayoutContent() {
       />
       <TimerProvider>
         <PomodoroProvider>
-          <SafeAreaView edges={["top"]} style={[styles.container, { backgroundColor: theme.background }]}>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                animation: 'slide_from_right',
-                gestureEnabled: true,
-                contentStyle: { backgroundColor: theme.background },
-              }}
-            />
-            <AlarmModal
-              visible={showAlarmModal}
-              task={alarmTask}
-              onDismiss={() => {
-                setShowAlarmModal(false);
-                setAlarmTask(null);
-              }}
-            />
-          </SafeAreaView>
+          <ThemeBackground>
+            <SafeAreaView edges={["top"]} style={[styles.container, { backgroundColor: 'transparent' }]}>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  animation: 'slide_from_right',
+                  gestureEnabled: true,
+                  contentStyle: { backgroundColor: 'transparent' },
+                }}
+              />
+              <AlarmModal
+                visible={showAlarmModal}
+                task={alarmTask}
+                onDismiss={() => {
+                  setShowAlarmModal(false);
+                  setAlarmTask(null);
+                }}
+              />
+            </SafeAreaView>
+          </ThemeBackground>
         </PomodoroProvider>
       </TimerProvider>
     </SafeAreaProvider>

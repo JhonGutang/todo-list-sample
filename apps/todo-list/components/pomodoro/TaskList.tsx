@@ -82,7 +82,7 @@ function AnimatedTaskItem({ task, index, isFirst, isLast, isSelected, onPress, r
                             style={[
                                 styles.taskItemName,
                                 { color: theme.textPrimary },
-                                isSelected && { color: themeType === 'cinnamoroll' ? theme.textPrimary : theme.white }
+                                isSelected && { color: theme.white }
                             ]}
                             numberOfLines={1}
                         >
@@ -93,7 +93,7 @@ function AnimatedTaskItem({ task, index, isFirst, isLast, isSelected, onPress, r
                                 style={[
                                     styles.taskItemDescription,
                                     { color: theme.textSecondary },
-                                    isSelected && { color: themeType === 'cinnamoroll' ? theme.textSecondary : 'rgba(255,255,255,0.7)' }
+                                    isSelected && { color: 'rgba(255,255,255,0.7)' }
                                 ]}
                                 numberOfLines={1}
                             >
