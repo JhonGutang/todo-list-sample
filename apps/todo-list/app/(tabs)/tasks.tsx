@@ -8,15 +8,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Chip from '../../components/Chip';
 import TaskModal from '../../components/tasks/TaskModal';
 import useDateFormatter from '../../hooks/useDateFormatter';
-import { initDb, getAllCategories, createTask, getAllTasks, getSubtasksForTask, setTaskCompletion, addSubtask } from '../../services';
+import { initDb, getAllCategories, createTask, setTaskCompletion, addSubtask } from '../../services';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useTasks } from '../../contexts/TasksContext';
 import TaskCard from '../../components/tasks/TaskCard';
 
 export default function TasksPage() {
   const router = useRouter();
   const { theme, themeType } = useTheme();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [tasksWithSubtasks, setTasksWithSubtasks] = useState<TaskWithSubtasks[]>([]);
+  const { tasks: tasksWithSubtasks, loadTasks } = useTasks();
   const [categories, setCategories] = useState<Category[]>([]);
   const [filter, setFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
@@ -36,24 +36,6 @@ export default function TasksPage() {
       setCategories(cats);
     } catch (error) {
       console.error('Failed to load categories:', error);
-    }
-  }, []);
-
-  const loadTasks = useCallback(async () => {
-    try {
-      await initDb();
-      const loadedTasks = await getAllTasks();
-      setTasks(loadedTasks);
-
-      const tasksWithSubs = await Promise.all(
-        loadedTasks.map(async (task) => {
-          const subtasks = await getSubtasksForTask(task.id);
-          return { ...task, subtasks };
-        })
-      );
-      setTasksWithSubtasks(tasksWithSubs);
-    } catch (error) {
-      console.error('Failed to load tasks:', error);
     }
   }, []);
 

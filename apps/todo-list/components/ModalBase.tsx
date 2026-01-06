@@ -75,7 +75,7 @@ export default function ModalBase({
                     {
                         transform: [{ translateY }],
                         maxHeight,
-                        backgroundColor: theme.cardBg,
+                        backgroundColor: theme.modalBg || theme.cardBg,
                         borderTopLeftRadius: theme.cardRadius,
                         borderTopRightRadius: theme.cardRadius,
                     }

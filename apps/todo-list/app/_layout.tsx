@@ -4,6 +4,7 @@ import { StyleSheet, StatusBar } from "react-native";
 import { TimerProvider } from "@/contexts/TimerContext";
 import { PomodoroProvider } from "@/contexts/PomodoroContext";
 import { ThemeProvider, useTheme } from "@/contexts/ThemeContext";
+import { TasksProvider } from "@/contexts/TasksContext";
 import { ThemeBackground } from "@/components/ThemeBackground";
 import { useEffect, useState } from "react";
 import * as Notifications from 'expo-notifications';
@@ -51,7 +52,8 @@ function RootLayoutContent() {
       />
       <TimerProvider>
         <PomodoroProvider>
-          <ThemeBackground>
+          <TasksProvider>
+            <ThemeBackground>
             <SafeAreaView edges={["top"]} style={[styles.container, { backgroundColor: 'transparent' }]}>
               <Stack
                 screenOptions={{
@@ -71,6 +73,7 @@ function RootLayoutContent() {
               />
             </SafeAreaView>
           </ThemeBackground>
+          </TasksProvider>
         </PomodoroProvider>
       </TimerProvider>
     </SafeAreaProvider>

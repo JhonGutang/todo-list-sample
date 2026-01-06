@@ -18,6 +18,7 @@ export type ThemeColors = {
     cardBg: string;
     cardBgCompleted: string;
     glassBg: string;
+    modalBg?: string; // Optional solid background for modals (falls back to cardBg)
     // Theme-specific UI properties
     cardRadius: number;
     cardBorderWidth: number;
@@ -46,6 +47,7 @@ export const Themes = {
         cardBg: '#FFFFFF',
         cardBgCompleted: '#F3F4F6',
         glassBg: 'rgba(255, 255, 255, 0.8)',
+        modalBg: '#FFFFFF',
         cardRadius: 16,
         cardBorderWidth: 1,
         shadowColor: 'rgba(0, 0, 0, 0.05)',
@@ -71,6 +73,7 @@ export const Themes = {
         cardBg: '#1E293B',
         cardBgCompleted: '#0F172A',
         glassBg: 'rgba(15, 23, 42, 0.8)',
+        modalBg: '#1E293B',
         cardRadius: 16,
         cardBorderWidth: 1,
         shadowColor: 'rgba(0, 0, 0, 0.2)',
@@ -98,6 +101,7 @@ export const Themes = {
         cardBg: 'rgba(28, 28, 46, 0.75)', // Glassmorphism
         cardBgCompleted: 'rgba(28, 28, 46, 0.5)',
         glassBg: 'rgba(28, 28, 46, 0.8)',
+        modalBg: '#1C1C2E', // Solid background for modals in lantern theme
         cardRadius: 16,
         cardBorderWidth: 1,
         shadowColor: '#FFAB00', // Glow effect

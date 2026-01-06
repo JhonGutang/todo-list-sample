@@ -87,18 +87,40 @@ const TaskCard = ({ item, index, categories, onToggleComplete, priorityColor }: 
                             {item.name}
                         </Text>
                         <View style={styles.metaRow}>
-                            <Chip label={categoryName} color={categoryColor} variant="label" size="small" />
-                            {item.startTime && (
+                            <View style={styles.chipsContainer}>
+                                <Chip label={categoryName} color={categoryColor} variant="label" size="small" />
+                                {item.subtasks && item.subtasks.length > 0 && (
+                                    <Chip 
+                                        label={`${item.subtasks.filter(s => s.completed).length} / ${item.subtasks.length}`}
+                                        color={theme.textSecondary}
+                                        variant="label"
+                                        size="small"
+                                        style={{ marginLeft: 6 }}
+                                    />
+                                )}
+                            </View>
+                            {(dateLabel || item.startTime) && (
                                 <View style={styles.timeContainer}>
                                     {item.reminderPreset && (
                                         <Ionicons name="notifications" size={12} color={theme.textSecondary} style={{ marginRight: 4 }} />
                                     )}
-                                    <Text style={[styles.date, { color: theme.textSecondary }]}>
-                                        {new Date(item.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                                    </Text>
+                                    {dateLabel && (
+                                        <Text style={[styles.date, { color: theme.textSecondary }]}>
+                                            {dateLabel}
+                                        </Text>
+                                    )}
+                                    {dateLabel && item.startTime && (
+                                        <Text style={[styles.date, { color: theme.textSecondary, marginLeft: 4 }]}>
+                                            •
+                                        </Text>
+                                    )}
+                                    {item.startTime && (
+                                        <Text style={[styles.date, { color: theme.textSecondary, marginLeft: dateLabel ? 4 : 0 }]}>
+                                            {new Date(item.startTime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                                        </Text>
+                                    )}
                                 </View>
                             )}
-                            {!item.startTime && dateLabel && <Text style={[styles.date, { color: theme.textSecondary }]}>{dateLabel}</Text>}
                         </View>
                     </View>
                 </View>
@@ -163,6 +185,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         marginTop: 4,
+    },
+    chipsContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
     },
     timeContainer: {
         flexDirection: 'row',
