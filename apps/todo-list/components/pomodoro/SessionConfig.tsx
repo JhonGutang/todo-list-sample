@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Task, PomodoroConfig } from '@todolist/shared-types';
+import { Task } from '@todolist/shared-types';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface SessionConfigProps {
     selectedTask: Task;
@@ -40,23 +41,36 @@ export default function SessionConfig({
     animationOpacity,
     animationTranslateY,
 }: SessionConfigProps) {
+    const { theme, themeType } = useTheme();
+
     return (
         <View style={styles.container}>
             {/* Step 1: Selected Task */}
             <View style={styles.stepSection}>
-                <Text style={styles.stepLabel}>Task Selected</Text>
-                <View style={styles.selectedTaskBox}>
+                <Text style={[styles.stepLabel, { color: theme.textSecondary }]}>Task Selected</Text>
+                <View style={[
+                    styles.selectedTaskBox,
+                    {
+                        backgroundColor: theme.cardBg,
+                        borderColor: theme.success,
+                        borderRadius: themeType === 'cinnamoroll' ? 20 : 12,
+                        borderWidth: themeType === 'cinnamoroll' ? 3 : 2
+                    }
+                ]}>
                     <View style={styles.selectedTaskInfo}>
-                        <Text style={styles.selectedTaskName}>{selectedTask.name}</Text>
+                        <Text style={[styles.selectedTaskName, { color: theme.textPrimary }]}>{selectedTask.name}</Text>
                         {subtaskCount > 0 && (
-                            <View style={styles.subtaskBadge}>
-                                <FontAwesome name="list" size={10} color="#6366f1" />
-                                <Text style={styles.subtaskBadgeText}>{subtaskCount} subtask{subtaskCount > 1 ? 's' : ''}</Text>
+                            <View style={[styles.subtaskBadge, { backgroundColor: themeType === 'cinnamoroll' ? theme.background : 'rgba(99, 102, 241, 0.1)' }]}>
+                                <FontAwesome name="list" size={10} color={theme.primary} />
+                                <Text style={[styles.subtaskBadgeText, { color: theme.primary }]}>{subtaskCount} subtask{subtaskCount > 1 ? 's' : ''}</Text>
                             </View>
                         )}
                     </View>
-                    <TouchableOpacity style={styles.changeButton} onPress={onChangeTask}>
-                        <FontAwesome name="pencil" size={14} color="#6b7280" />
+                    <TouchableOpacity
+                        style={[styles.changeButton, { backgroundColor: theme.background, borderRadius: themeType === 'cinnamoroll' ? 12 : 8 }]}
+                        onPress={onChangeTask}
+                    >
+                        <FontAwesome name="pencil" size={14} color={theme.textSecondary} />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -71,30 +85,40 @@ export default function SessionConfig({
                     },
                 ]}
             >
-                <Text style={styles.stepLabel}>Configure Session</Text>
+                <Text style={[styles.stepLabel, { color: theme.textSecondary }]}>Configure Session</Text>
 
                 {/* Duration Selection */}
                 <View style={styles.configSection}>
-                    <Text style={styles.configLabel}>Work Duration</Text>
+                    <Text style={[styles.configLabel, { color: theme.textSecondary }]}>Work Duration</Text>
                     <View style={styles.durationRow}>
                         {DURATION_OPTIONS.map((option) => (
                             <TouchableOpacity
                                 key={option.value}
                                 style={[
                                     styles.durationButton,
-                                    duration === option.value && styles.durationButtonActive,
+                                    {
+                                        backgroundColor: theme.cardBg,
+                                        borderColor: theme.border,
+                                        borderRadius: themeType === 'cinnamoroll' ? 20 : 12,
+                                    },
+                                    duration === option.value && {
+                                        backgroundColor: theme.primary,
+                                        borderColor: theme.primary,
+                                    },
                                 ]}
                                 onPress={() => onDurationChange(option.value)}
                             >
                                 <Text style={[
                                     styles.durationValue,
-                                    duration === option.value && styles.durationValueActive,
+                                    { color: theme.textPrimary },
+                                    duration === option.value && { color: themeType === 'cinnamoroll' ? theme.textPrimary : theme.white },
                                 ]}>
                                     {option.label}
                                 </Text>
                                 <Text style={[
                                     styles.durationUnit,
-                                    duration === option.value && styles.durationUnitActive,
+                                    { color: theme.textTertiary },
+                                    duration === option.value && { color: themeType === 'cinnamoroll' ? theme.textSecondary : 'rgba(255,255,255,0.8)' },
                                 ]}>
                                     {option.sublabel}
                                 </Text>
@@ -105,7 +129,7 @@ export default function SessionConfig({
 
                 {/* Iterations Selection */}
                 <View style={styles.configSection}>
-                    <Text style={styles.configLabel}>Number of Pomodoros</Text>
+                    <Text style={[styles.configLabel, { color: theme.textSecondary }]}>Number of Pomodoros</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                         <View style={styles.iterationsRow}>
                             {ITERATION_OPTIONS.map((num) => (
@@ -113,13 +137,22 @@ export default function SessionConfig({
                                     key={num}
                                     style={[
                                         styles.iterationButton,
-                                        iterations === num && styles.iterationButtonActive,
+                                        {
+                                            backgroundColor: theme.cardBg,
+                                            borderColor: theme.border,
+                                            borderRadius: themeType === 'cinnamoroll' ? 12 : 10,
+                                        },
+                                        iterations === num && {
+                                            backgroundColor: theme.primary,
+                                            borderColor: theme.primary,
+                                        },
                                     ]}
                                     onPress={() => onIterationsChange(num)}
                                 >
                                     <Text style={[
                                         styles.iterationText,
-                                        iterations === num && styles.iterationTextActive,
+                                        { color: theme.textPrimary },
+                                        iterations === num && { color: themeType === 'cinnamoroll' ? theme.textPrimary : theme.white },
                                     ]}>
                                         {num}
                                     </Text>
@@ -131,29 +164,39 @@ export default function SessionConfig({
 
                 {/* Break Type Selection */}
                 <View style={styles.configSection}>
-                    <Text style={styles.configLabel}>Break Duration</Text>
+                    <Text style={[styles.configLabel, { color: theme.textSecondary }]}>Break Duration</Text>
                     <View style={styles.breakRow}>
                         <TouchableOpacity
                             style={[
                                 styles.breakButton,
-                                breakType === 'short' && styles.breakButtonActive,
+                                {
+                                    backgroundColor: theme.cardBg,
+                                    borderColor: theme.border,
+                                    borderRadius: themeType === 'cinnamoroll' ? 20 : 12,
+                                },
+                                breakType === 'short' && {
+                                    backgroundColor: theme.primary,
+                                    borderColor: theme.primary,
+                                },
                             ]}
                             onPress={() => onBreakTypeChange('short')}
                         >
                             <FontAwesome
                                 name="coffee"
                                 size={16}
-                                color={breakType === 'short' ? '#fff' : '#6b7280'}
+                                color={breakType === 'short' ? (themeType === 'cinnamoroll' ? theme.textPrimary : theme.white) : theme.textSecondary}
                             />
                             <Text style={[
                                 styles.breakText,
-                                breakType === 'short' && styles.breakTextActive,
+                                { color: theme.textPrimary },
+                                breakType === 'short' && { color: themeType === 'cinnamoroll' ? theme.textPrimary : theme.white },
                             ]}>
                                 Short
                             </Text>
                             <Text style={[
                                 styles.breakDuration,
-                                breakType === 'short' && styles.breakDurationActive,
+                                { color: theme.textTertiary },
+                                breakType === 'short' && { color: themeType === 'cinnamoroll' ? theme.textSecondary : 'rgba(255,255,255,0.8)' },
                             ]}>
                                 2 min
                             </Text>
@@ -161,24 +204,34 @@ export default function SessionConfig({
                         <TouchableOpacity
                             style={[
                                 styles.breakButton,
-                                breakType === 'long' && styles.breakButtonActive,
+                                {
+                                    backgroundColor: theme.cardBg,
+                                    borderColor: theme.border,
+                                    borderRadius: themeType === 'cinnamoroll' ? 20 : 12,
+                                },
+                                breakType === 'long' && {
+                                    backgroundColor: theme.primary,
+                                    borderColor: theme.primary,
+                                },
                             ]}
                             onPress={() => onBreakTypeChange('long')}
                         >
                             <FontAwesome
                                 name="bed"
                                 size={16}
-                                color={breakType === 'long' ? '#fff' : '#6b7280'}
+                                color={breakType === 'long' ? (themeType === 'cinnamoroll' ? theme.textPrimary : theme.white) : theme.textSecondary}
                             />
                             <Text style={[
                                 styles.breakText,
-                                breakType === 'long' && styles.breakTextActive,
+                                { color: theme.textPrimary },
+                                breakType === 'long' && { color: themeType === 'cinnamoroll' ? theme.textPrimary : theme.white },
                             ]}>
                                 Long
                             </Text>
                             <Text style={[
                                 styles.breakDuration,
-                                breakType === 'long' && styles.breakDurationActive,
+                                { color: theme.textTertiary },
+                                breakType === 'long' && { color: themeType === 'cinnamoroll' ? theme.textSecondary : 'rgba(255,255,255,0.8)' },
                             ]}>
                                 5 min
                             </Text>
@@ -187,25 +240,32 @@ export default function SessionConfig({
                 </View>
 
                 {/* Summary */}
-                <View style={styles.summaryCard}>
+                <View style={[styles.summaryCard, { backgroundColor: theme.background, borderRadius: themeType === 'cinnamoroll' ? 20 : 12 }]}>
                     <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>Total Focus Time</Text>
-                        <Text style={styles.summaryValue}>{duration * iterations} min</Text>
+                        <Text style={[styles.summaryLabel, { color: theme.textSecondary }]}>Total Focus Time</Text>
+                        <Text style={[styles.summaryValue, { color: theme.textPrimary }]}>{duration * iterations} min</Text>
                     </View>
                     <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>Total Break Time</Text>
-                        <Text style={styles.summaryValue}>{(breakType === 'short' ? 2 : 5) * iterations} min</Text>
+                        <Text style={[styles.summaryLabel, { color: theme.textSecondary }]}>Total Break Time</Text>
+                        <Text style={[styles.summaryValue, { color: theme.textPrimary }]}>{(breakType === 'short' ? 2 : 5) * iterations} min</Text>
                     </View>
                 </View>
 
                 {/* Start Button */}
                 <TouchableOpacity
-                    style={styles.startButton}
+                    style={[
+                        styles.startButton,
+                        {
+                            backgroundColor: theme.primary,
+                            borderRadius: themeType === 'cinnamoroll' ? 30 : 14,
+                            shadowColor: theme.primary
+                        }
+                    ]}
                     onPress={onStartSession}
                     activeOpacity={0.85}
                 >
-                    <FontAwesome name="play-circle" size={22} color="#fff" />
-                    <Text style={styles.startButtonText}>Start Session</Text>
+                    <FontAwesome name="play-circle" size={22} color={themeType === 'cinnamoroll' ? theme.textPrimary : theme.white} />
+                    <Text style={[styles.startButtonText, { color: themeType === 'cinnamoroll' ? theme.textPrimary : theme.white }]}>Start Session</Text>
                 </TouchableOpacity>
             </Animated.View>
         </View>
@@ -222,7 +282,6 @@ const styles = StyleSheet.create({
     stepLabel: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#6b7280',
         textTransform: 'uppercase',
         letterSpacing: 0.5,
         marginBottom: 10,
@@ -230,13 +289,9 @@ const styles = StyleSheet.create({
 
     // Selected Task Box
     selectedTaskBox: {
-        backgroundColor: '#fff',
-        borderRadius: 12,
         padding: 14,
         flexDirection: 'row',
         alignItems: 'center',
-        borderWidth: 2,
-        borderColor: '#10b981',
     },
     selectedTaskInfo: {
         flex: 1,
@@ -244,12 +299,10 @@ const styles = StyleSheet.create({
     selectedTaskName: {
         fontSize: 15,
         fontWeight: '700',
-        color: '#1f2937',
     },
     subtaskBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#ede9fe',
         paddingHorizontal: 8,
         paddingVertical: 3,
         borderRadius: 6,
@@ -260,13 +313,10 @@ const styles = StyleSheet.create({
     subtaskBadgeText: {
         fontSize: 11,
         fontWeight: '600',
-        color: '#6366f1',
     },
     changeButton: {
         width: 36,
         height: 36,
-        borderRadius: 8,
-        backgroundColor: '#f3f4f6',
         alignItems: 'center',
         justifyContent: 'center',
     },
@@ -278,7 +328,6 @@ const styles = StyleSheet.create({
     configLabel: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#6b7280',
         marginBottom: 8,
     },
 
@@ -289,33 +338,18 @@ const styles = StyleSheet.create({
     },
     durationButton: {
         flex: 1,
-        backgroundColor: '#fff',
-        borderRadius: 12,
         paddingVertical: 14,
         alignItems: 'center',
         borderWidth: 2,
-        borderColor: '#e5e7eb',
-    },
-    durationButtonActive: {
-        backgroundColor: '#6366f1',
-        borderColor: '#6366f1',
     },
     durationValue: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#374151',
-    },
-    durationValueActive: {
-        color: '#fff',
     },
     durationUnit: {
         fontSize: 11,
         fontWeight: '500',
-        color: '#9ca3af',
         marginTop: 2,
-    },
-    durationUnitActive: {
-        color: 'rgba(255,255,255,0.8)',
     },
 
     // Iterations
@@ -327,24 +361,13 @@ const styles = StyleSheet.create({
     iterationButton: {
         width: 42,
         height: 42,
-        borderRadius: 10,
-        backgroundColor: '#fff',
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 2,
-        borderColor: '#e5e7eb',
-    },
-    iterationButtonActive: {
-        backgroundColor: '#6366f1',
-        borderColor: '#6366f1',
     },
     iterationText: {
         fontSize: 15,
         fontWeight: '700',
-        color: '#374151',
-    },
-    iterationTextActive: {
-        color: '#fff',
     },
 
     // Break Type
@@ -354,40 +377,23 @@ const styles = StyleSheet.create({
     },
     breakButton: {
         flex: 1,
-        backgroundColor: '#fff',
-        borderRadius: 12,
         paddingVertical: 12,
         paddingHorizontal: 12,
         alignItems: 'center',
         borderWidth: 2,
-        borderColor: '#e5e7eb',
         gap: 4,
-    },
-    breakButtonActive: {
-        backgroundColor: '#6366f1',
-        borderColor: '#6366f1',
     },
     breakText: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#374151',
-    },
-    breakTextActive: {
-        color: '#fff',
     },
     breakDuration: {
         fontSize: 11,
         fontWeight: '500',
-        color: '#9ca3af',
-    },
-    breakDurationActive: {
-        color: 'rgba(255,255,255,0.8)',
     },
 
     // Summary
     summaryCard: {
-        backgroundColor: '#f9fafb',
-        borderRadius: 12,
         padding: 14,
         marginBottom: 20,
     },
@@ -399,24 +405,19 @@ const styles = StyleSheet.create({
     },
     summaryLabel: {
         fontSize: 13,
-        color: '#6b7280',
     },
     summaryValue: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#374151',
     },
 
     // Start Button
     startButton: {
-        backgroundColor: '#6366f1',
-        borderRadius: 14,
         paddingVertical: 16,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 10,
-        shadowColor: '#6366f1',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
@@ -425,6 +426,5 @@ const styles = StyleSheet.create({
     startButtonText: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#fff',
     },
 });

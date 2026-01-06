@@ -1,7 +1,9 @@
-import React, { useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Task } from '@todolist/shared-types';
+import Animated, { FadeInDown, useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface TaskListProps {
     tasks: Task[];
@@ -11,46 +13,36 @@ interface TaskListProps {
 
 interface AnimatedTaskItemProps {
     task: Task;
+    index: number;
     isFirst: boolean;
     isLast: boolean;
     isSelected: boolean;
     onPress: () => void;
+    refreshKey?: string | number;
 }
 
-function AnimatedTaskItem({ task, isFirst, isLast, isSelected, onPress }: AnimatedTaskItemProps) {
-    const slideAnim = useRef(new Animated.Value(0)).current;
-    const scaleAnim = useRef(new Animated.Value(1)).current;
+function AnimatedTaskItem({ task, index, isFirst, isLast, isSelected, onPress, refreshKey }: AnimatedTaskItemProps) {
+    const { theme, themeType } = useTheme();
+    const slideTx = useSharedValue(0);
+    const scale = useSharedValue(1);
+
+    const animatedStyle = useAnimatedStyle(() => {
+        return {
+            transform: [
+                { translateX: slideTx.value },
+                { scale: scale.value },
+            ],
+        };
+    });
 
     const handlePressIn = () => {
-        Animated.parallel([
-            Animated.spring(slideAnim, {
-                toValue: 8,
-                useNativeDriver: true,
-                speed: 50,
-                bounciness: 8,
-            }),
-            Animated.spring(scaleAnim, {
-                toValue: 0.98,
-                useNativeDriver: true,
-                speed: 50,
-            }),
-        ]).start();
+        slideTx.value = withSpring(8, { damping: 10, stiffness: 100 });
+        scale.value = withSpring(0.98, { damping: 10, stiffness: 100 });
     };
 
     const handlePressOut = () => {
-        Animated.parallel([
-            Animated.spring(slideAnim, {
-                toValue: 0,
-                useNativeDriver: true,
-                speed: 50,
-                bounciness: 8,
-            }),
-            Animated.spring(scaleAnim, {
-                toValue: 1,
-                useNativeDriver: true,
-                speed: 50,
-            }),
-        ]).start();
+        slideTx.value = withSpring(0, { damping: 10, stiffness: 100 });
+        scale.value = withSpring(1, { damping: 10, stiffness: 100 });
     };
 
     return (
@@ -61,17 +53,27 @@ function AnimatedTaskItem({ task, isFirst, isLast, isSelected, onPress }: Animat
             activeOpacity={1}
         >
             <Animated.View
+                entering={FadeInDown.delay(index * 50).duration(400)}
+                key={`${task.id}-${refreshKey}`}
                 style={[
                     styles.taskItem,
+                    {
+                        backgroundColor: theme.cardBg,
+                        borderColor: theme.border,
+                        borderWidth: theme.cardBorderWidth,
+                        borderRadius: theme.cardRadius,
+                    },
                     isFirst && styles.taskItemFirst,
                     isLast && styles.taskItemLast,
-                    isSelected && styles.taskItemSelected,
-                    {
-                        transform: [
-                            { translateX: slideAnim },
-                            { scale: scaleAnim },
-                        ],
-                    },
+                    isSelected && [
+                        styles.taskItemSelected,
+                        {
+                            backgroundColor: theme.primary,
+                            borderColor: theme.primary,
+                            shadowColor: theme.shadowColor,
+                        }
+                    ],
+                    animatedStyle
                 ]}
             >
                 <View style={styles.taskItemContent}>
@@ -79,7 +81,8 @@ function AnimatedTaskItem({ task, isFirst, isLast, isSelected, onPress }: Animat
                         <Text
                             style={[
                                 styles.taskItemName,
-                                isSelected && styles.taskItemNameSelected
+                                { color: theme.textPrimary },
+                                isSelected && { color: themeType === 'cinnamoroll' ? theme.textPrimary : theme.white }
                             ]}
                             numberOfLines={1}
                         >
@@ -89,7 +92,8 @@ function AnimatedTaskItem({ task, isFirst, isLast, isSelected, onPress }: Animat
                             <Text
                                 style={[
                                     styles.taskItemDescription,
-                                    isSelected && styles.taskItemDescriptionSelected
+                                    { color: theme.textSecondary },
+                                    isSelected && { color: themeType === 'cinnamoroll' ? theme.textSecondary : 'rgba(255,255,255,0.7)' }
                                 ]}
                                 numberOfLines={1}
                             >
@@ -103,13 +107,15 @@ function AnimatedTaskItem({ task, isFirst, isLast, isSelected, onPress }: Animat
     );
 }
 
-export default function TaskList({ tasks, onSelectTask, selectedTaskId }: TaskListProps) {
+export default function TaskList({ tasks, onSelectTask, selectedTaskId, refreshKey }: TaskListProps & { refreshKey?: string | number }) {
+    const { theme } = useTheme();
+
     if (tasks.length === 0) {
         return (
             <View style={styles.emptyState}>
-                <FontAwesome name="inbox" size={48} color="#d1d5db" />
-                <Text style={styles.emptyText}>No tasks available</Text>
-                <Text style={styles.emptySubtext}>Create a task first to get started</Text>
+                <FontAwesome name="inbox" size={48} color={theme.textTertiary} />
+                <Text style={[styles.emptyText, { color: theme.textSecondary }]}>No tasks available</Text>
+                <Text style={[styles.emptySubtext, { color: theme.textTertiary }]}>Create a task first to get started</Text>
             </View>
         );
     }
@@ -122,12 +128,14 @@ export default function TaskList({ tasks, onSelectTask, selectedTaskId }: TaskLi
         >
             {tasks.map((item, index) => (
                 <AnimatedTaskItem
-                    key={item.id}
+                    key={`${item.id}-${refreshKey}`}
                     task={item}
+                    index={index}
                     isFirst={index === 0}
                     isLast={index === tasks.length - 1}
                     isSelected={item.id === selectedTaskId}
                     onPress={() => onSelectTask(item)}
+                    refreshKey={refreshKey}
                 />
             ))}
         </ScrollView>
@@ -143,13 +151,8 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     taskItem: {
-        backgroundColor: '#fff',
         paddingVertical: 18,
         paddingHorizontal: 20,
-        borderRadius: 16,
-        borderWidth: 1.5,
-        borderColor: '#e5e7eb',
-        shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
         shadowOpacity: 0.05,
         shadowRadius: 2,
@@ -162,9 +165,6 @@ const styles = StyleSheet.create({
         // No special styling needed with gap
     },
     taskItemSelected: {
-        backgroundColor: '#6366f1',
-        borderColor: '#6366f1',
-        shadowColor: '#6366f1',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
         shadowRadius: 8,
@@ -180,18 +180,10 @@ const styles = StyleSheet.create({
     taskItemName: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#1f2937',
-    },
-    taskItemNameSelected: {
-        color: '#ffffff',
     },
     taskItemDescription: {
         fontSize: 13,
-        color: '#9ca3af',
         marginTop: 4,
-    },
-    taskItemDescriptionSelected: {
-        color: '#e0e7ff',
     },
     emptyState: {
         flex: 1,
@@ -202,12 +194,10 @@ const styles = StyleSheet.create({
     emptyText: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#9ca3af',
         marginTop: 16,
     },
     emptySubtext: {
         fontSize: 14,
-        color: '#d1d5db',
         marginTop: 4,
     },
 });

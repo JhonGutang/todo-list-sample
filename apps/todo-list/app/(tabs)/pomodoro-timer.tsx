@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import CircularTimer from '@/components/pomodoro/CircularTimer';
@@ -8,7 +9,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useTimer } from '@/contexts/TimerContext';
 import { usePomodoro } from '@/contexts/PomodoroContext';
 import { PomodoroConfig } from '@todolist/shared-types';
-import Colors from '@/constants/Colors';
+import { useTheme } from '@/contexts/ThemeContext';
 
 type TimerMode = 'focus' | 'task';
 
@@ -16,13 +17,21 @@ export default function PomodoroTimerPage() {
     const [mode, setMode] = useState<TimerMode>('focus');
     const { isTimerRunning, setTimerRunning } = useTimer();
     const { session, startSession, cancelSession, isLoading } = usePomodoro();
+    const { theme, themeType } = useTheme();
     const navigation = useNavigation();
     const isTimerRunningRef = React.useRef(isTimerRunning);
+    const [focusCount, setFocusCount] = useState(0);
 
     // Keep ref in sync with state
     useEffect(() => {
         isTimerRunningRef.current = isTimerRunning;
     }, [isTimerRunning]);
+
+    useFocusEffect(
+        useCallback(() => {
+            setFocusCount(prev => prev + 1);
+        }, [])
+    );
 
     // Prevent navigation when timer is running
     useEffect(() => {
@@ -100,13 +109,22 @@ export default function PomodoroTimerPage() {
     const effectiveMode = hasActiveSession ? 'task' : mode;
 
     return (
-        <View style={styles.container}>
+        <View style={[styles.container, { backgroundColor: theme.background }]}>
             {/* Tab Navigation */}
-            <View style={styles.tabContainer}>
+            <View style={[
+                styles.tabContainer,
+                {
+                    backgroundColor: theme.cardBg,
+                    borderColor: theme.border,
+                    borderWidth: theme.cardBorderWidth,
+                    borderRadius: themeType === 'cinnamoroll' ? 30 : 16
+                }
+            ]}>
                 <TouchableOpacity
                     style={[
                         styles.tab,
-                        effectiveMode === 'focus' && styles.tabActive,
+                        { borderRadius: themeType === 'cinnamoroll' ? 25 : 12 },
+                        effectiveMode === 'focus' && { backgroundColor: theme.primary },
                         (isTimerRunning || hasActiveSession) && effectiveMode !== 'focus' && styles.tabDisabled
                     ]}
                     onPress={() => handleModeSwitch('focus')}
@@ -116,13 +134,14 @@ export default function PomodoroTimerPage() {
                     <FontAwesome
                         name="clock-o"
                         size={18}
-                        color={effectiveMode === 'focus' ? Colors.white : (isTimerRunning || hasActiveSession) ? Colors.border : Colors.textSecondary}
+                        color={effectiveMode === 'focus' ? (themeType === 'cinnamoroll' ? theme.textPrimary : theme.white) : (isTimerRunning || hasActiveSession) ? theme.border : theme.textSecondary}
                         style={styles.tabIcon}
                     />
                     <Text style={[
                         styles.tabText,
-                        effectiveMode === 'focus' && styles.tabTextActive,
-                        (isTimerRunning || hasActiveSession) && effectiveMode !== 'focus' && styles.tabTextDisabled
+                        { color: theme.textSecondary },
+                        effectiveMode === 'focus' && { color: themeType === 'cinnamoroll' ? theme.textPrimary : theme.white, fontWeight: '700' },
+                        (isTimerRunning || hasActiveSession) && effectiveMode !== 'focus' && { color: theme.border }
                     ]}>
                         Focus Timer
                     </Text>
@@ -131,7 +150,8 @@ export default function PomodoroTimerPage() {
                 <TouchableOpacity
                     style={[
                         styles.tab,
-                        effectiveMode === 'task' && styles.tabActive,
+                        { borderRadius: themeType === 'cinnamoroll' ? 25 : 12 },
+                        effectiveMode === 'task' && { backgroundColor: theme.primary },
                         (isTimerRunning || hasActiveSession) && effectiveMode !== 'task' && styles.tabDisabled
                     ]}
                     onPress={() => handleModeSwitch('task')}
@@ -141,13 +161,14 @@ export default function PomodoroTimerPage() {
                     <FontAwesome
                         name="tasks"
                         size={18}
-                        color={effectiveMode === 'task' ? Colors.white : (isTimerRunning || hasActiveSession) ? Colors.border : Colors.textSecondary}
+                        color={effectiveMode === 'task' ? (themeType === 'cinnamoroll' ? theme.textPrimary : theme.white) : (isTimerRunning || hasActiveSession) ? theme.border : theme.textSecondary}
                         style={styles.tabIcon}
                     />
                     <Text style={[
                         styles.tabText,
-                        effectiveMode === 'task' && styles.tabTextActive,
-                        (isTimerRunning || hasActiveSession) && effectiveMode !== 'task' && styles.tabTextDisabled
+                        { color: theme.textSecondary },
+                        effectiveMode === 'task' && { color: themeType === 'cinnamoroll' ? theme.textPrimary : theme.white, fontWeight: '700' },
+                        (isTimerRunning || hasActiveSession) && effectiveMode !== 'task' && { color: theme.border }
                     ]}>
                         Task Timer
                     </Text>
@@ -182,7 +203,7 @@ export default function PomodoroTimerPage() {
                             />
                         </View>
                     ) : (
-                        <TaskSelector onStartSession={handleStartSession} />
+                        <TaskSelector onStartSession={handleStartSession} refreshKey={`${mode}-${focusCount}`} />
                     )}
                 </>
             )}
@@ -193,7 +214,6 @@ export default function PomodoroTimerPage() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: Colors.white,
         paddingTop: 16,
     },
     focusContent: {
@@ -214,16 +234,9 @@ const styles = StyleSheet.create({
     // Tab Styles
     tabContainer: {
         flexDirection: 'row',
-        backgroundColor: Colors.white,
-        borderRadius: 16,
         padding: 4,
         marginBottom: 16,
         marginHorizontal: 16,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 12,
-        elevation: 3,
         alignSelf: 'center',
     },
     tab: {
@@ -231,17 +244,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingVertical: 12,
         paddingHorizontal: 20,
-        borderRadius: 12,
         minWidth: 140,
         justifyContent: 'center',
-    },
-    tabActive: {
-        backgroundColor: Colors.primary,
-        shadowColor: Colors.primary,
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 4,
     },
     tabDisabled: {
         opacity: 0.4,
@@ -252,14 +256,8 @@ const styles = StyleSheet.create({
     tabText: {
         fontSize: 15,
         fontWeight: '600',
-        color: Colors.textSecondary,
-    },
-    tabTextActive: {
-        color: Colors.white,
-    },
-    tabTextDisabled: {
-        color: Colors.border,
     },
 });
+
 
 

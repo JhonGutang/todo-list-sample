@@ -8,9 +8,10 @@ import SessionConfig from './SessionConfig';
 
 interface TaskSelectorProps {
     onStartSession: (taskId: string, config: PomodoroConfig) => void;
+    refreshKey?: string | number;
 }
 
-export default function TaskSelector({ onStartSession }: TaskSelectorProps) {
+export default function TaskSelector({ onStartSession, refreshKey }: TaskSelectorProps) {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [subtaskCount, setSubtaskCount] = useState(0);
@@ -99,6 +100,7 @@ export default function TaskSelector({ onStartSession }: TaskSelectorProps) {
                     tasks={tasks}
                     onSelectTask={handleTaskSelect}
                     selectedTaskId={undefined}
+                    refreshKey={refreshKey}
                 />
             </View>
         );

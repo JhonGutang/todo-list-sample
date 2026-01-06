@@ -1,38 +1,54 @@
 import React from 'react';
 import { Text, TouchableOpacity, View, StyleSheet } from 'react-native';
-import Colors from '../constants/Colors';
+import { useTheme } from '../contexts/ThemeContext';
 
 type Variant = 'label' | 'filter';
+type Size = 'small' | 'medium';
 
 type Props = {
   label: string;
   color?: string;
   variant?: Variant;
+  size?: Size;
   active?: boolean;
   onPress?: () => void;
   style?: any;
 };
 
-export default function Chip({ label, color = Colors.textSecondary, variant = 'label', active = false, onPress, style }: Props) {
+export default function Chip({
+  label,
+  color,
+  variant = 'label',
+  size = 'medium',
+  active = false,
+  onPress,
+  style
+}: Props) {
+  const { theme } = useTheme();
+  const isSmall = size === 'small';
+  const defaultColor = color || theme.textSecondary;
+
   const content = (
     <View
       style={[
         styles.base,
+        isSmall ? styles.small : styles.medium,
         variant === 'label' ? styles.label : styles.filter,
         variant === 'label'
-          ? { backgroundColor: color }
+          ? { backgroundColor: defaultColor }
           : active
-            ? { backgroundColor: Colors.primary, borderWidth: 0 }
-            : { borderColor: Colors.border, backgroundColor: Colors.white },
+            ? { backgroundColor: theme.primary, borderWidth: 0 }
+            : { borderColor: theme.border, backgroundColor: theme.cardBg },
       ]}
     >
       <Text style={[
         styles.text,
+        isSmall && styles.smallText,
         variant === 'label'
-          ? styles.labelText
+          ? { color: theme.white }
           : active
-            ? styles.filterActiveText
-            : { color: Colors.textSecondary }
+            ? { color: theme.white }
+            : { color: theme.textSecondary }
       ]}>{label}</Text>
     </View>
   );
@@ -47,33 +63,32 @@ export default function Chip({ label, color = Colors.textSecondary, variant = 'l
 
 const styles = StyleSheet.create({
   base: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
     borderRadius: 20,
-    minHeight: 29, // Ensures consistent height (13px font + 8px top + 8px bottom)
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  medium: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    minHeight: 28,
+  },
+  small: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    minHeight: 20,
   },
   label: {
-    minWidth: 48,
-    alignItems: 'center',
-    justifyContent: 'center'
+    minWidth: 40,
   },
   filter: {
     borderWidth: 1.5,
   },
   text: {
     fontWeight: '600',
-    fontSize: 13
+    fontSize: 13,
   },
-  labelText: {
-    color: Colors.white,
-    textTransform: 'capitalize'
-  },
-  filterActiveText: {
-    color: Colors.white
+  smallText: {
+    fontSize: 11,
   },
 });
+

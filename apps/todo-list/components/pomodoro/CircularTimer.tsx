@@ -1,9 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, Vibration, Animated } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { usePomodoro } from '@/contexts/PomodoroContext';
-import Colors from '@/constants/Colors';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface CircularTimerProps {
     mode: 'focus' | 'task';
@@ -12,6 +12,7 @@ interface CircularTimerProps {
 }
 
 export default function CircularTimer({ mode, onTimerComplete, onRunningStateChange }: CircularTimerProps) {
+    const { theme, themeType } = useTheme();
     const DEFAULT_MIN = 25;
     const [totalSeconds, setTotalSeconds] = useState(DEFAULT_MIN * 60);
     const [remaining, setRemaining] = useState(DEFAULT_MIN * 60);
@@ -156,40 +157,102 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
                     {/* Preset Buttons at Top */}
                     <View style={styles.presetsRow}>
                         <TouchableOpacity
-                            style={[styles.preset, totalSeconds === 25 * 60 && styles.presetActive, isRunning && styles.presetDisabled]}
+                            style={[
+                                styles.preset,
+                                {
+                                    backgroundColor: theme.cardBg,
+                                    borderColor: theme.border,
+                                    borderWidth: themeType === 'cinnamoroll' ? 1.5 : 1,
+                                    borderRadius: themeType === 'cinnamoroll' ? 50 : 20,
+                                },
+                                totalSeconds === 25 * 60 && {
+                                    backgroundColor: themeType === 'cinnamoroll' ? theme.white : theme.primary,
+                                    borderWidth: themeType === 'cinnamoroll' ? 1.5 : 0
+                                },
+                                isRunning && styles.presetDisabled
+                            ]}
                             onPress={() => setPreset(25)}
                             accessibilityLabel="25 minutes"
                             disabled={isRunning}
                         >
-                            <Text style={[styles.presetText, totalSeconds === 25 * 60 && styles.presetTextActive, isRunning && styles.presetTextDisabled]}>25m</Text>
+                            <Text style={[
+                                styles.presetText,
+                                { color: theme.textSecondary },
+                                totalSeconds === 25 * 60 && { color: themeType === 'cinnamoroll' ? '#000000' : theme.white },
+                                isRunning && { color: theme.textTertiary }
+                            ]}>25m</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                            style={[styles.preset, totalSeconds === 15 * 60 && styles.presetActive, isRunning && styles.presetDisabled]}
+                            style={[
+                                styles.preset,
+                                {
+                                    backgroundColor: theme.cardBg,
+                                    borderColor: theme.border,
+                                    borderWidth: themeType === 'cinnamoroll' ? 1.5 : 1,
+                                    borderRadius: themeType === 'cinnamoroll' ? 50 : 20,
+                                },
+                                totalSeconds === 15 * 60 && {
+                                    backgroundColor: themeType === 'cinnamoroll' ? theme.white : theme.primary,
+                                    borderWidth: themeType === 'cinnamoroll' ? 1.5 : 0
+                                },
+                                isRunning && styles.presetDisabled
+                            ]}
                             onPress={() => setPreset(15)}
                             accessibilityLabel="15 minutes"
                             disabled={isRunning}
                         >
-                            <Text style={[styles.presetText, totalSeconds === 15 * 60 && styles.presetTextActive, isRunning && styles.presetTextDisabled]}>15m</Text>
+                            <Text style={[
+                                styles.presetText,
+                                { color: theme.textSecondary },
+                                totalSeconds === 15 * 60 && { color: themeType === 'cinnamoroll' ? '#000000' : theme.white },
+                                isRunning && { color: theme.textTertiary }
+                            ]}>15m</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
-                            style={[styles.preset, totalSeconds === 5 * 60 && styles.presetActive, isRunning && styles.presetDisabled]}
+                            style={[
+                                styles.preset,
+                                {
+                                    backgroundColor: theme.cardBg,
+                                    borderColor: theme.border,
+                                    borderWidth: themeType === 'cinnamoroll' ? 1.5 : 1,
+                                    borderRadius: themeType === 'cinnamoroll' ? 50 : 20,
+                                },
+                                totalSeconds === 5 * 60 && {
+                                    backgroundColor: themeType === 'cinnamoroll' ? theme.white : theme.primary,
+                                    borderWidth: themeType === 'cinnamoroll' ? 1.5 : 0
+                                },
+                                isRunning && styles.presetDisabled
+                            ]}
                             onPress={() => setPreset(5)}
                             accessibilityLabel="5 minutes"
                             disabled={isRunning}
                         >
-                            <Text style={[styles.presetText, totalSeconds === 5 * 60 && styles.presetTextActive, isRunning && styles.presetTextDisabled]}>5m</Text>
+                            <Text style={[
+                                styles.presetText,
+                                { color: theme.textSecondary },
+                                totalSeconds === 5 * 60 && { color: themeType === 'cinnamoroll' ? '#000000' : theme.white },
+                                isRunning && { color: theme.textTertiary }
+                            ]}>5m</Text>
                         </TouchableOpacity>
                     </View>
 
                     {/* Circular Timer */}
                     <View style={styles.circularTimerContainer}>
                         <Svg width={circleSize} height={circleSize} style={styles.circularTimer}>
+                            {themeType === 'cinnamoroll' && (
+                                <Defs>
+                                    <LinearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <Stop offset="0%" stopColor="#89CFF0" />
+                                        <Stop offset="100%" stopColor="#DDA0DD" />
+                                    </LinearGradient>
+                                </Defs>
+                            )}
                             {/* Background Circle */}
                             <Circle
                                 cx={circleSize / 2}
                                 cy={circleSize / 2}
                                 r={radius}
-                                stroke="#F0F0F5"
+                                stroke={themeType === 'cinnamoroll' ? 'rgba(255,255,255,0.4)' : theme.border}
                                 strokeWidth={strokeWidth}
                                 fill="none"
                             />
@@ -198,7 +261,7 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
                                 cx={circleSize / 2}
                                 cy={circleSize / 2}
                                 r={radius}
-                                stroke={Colors.primary}
+                                stroke={themeType === 'cinnamoroll' ? "url(#timerGradient)" : theme.primary}
                                 strokeWidth={strokeWidth}
                                 fill="none"
                                 strokeDasharray={circumference}
@@ -211,24 +274,43 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
 
                         {/* Timer Display */}
                         <View style={styles.timerTextContainer}>
-                            <Text style={styles.focusTimerText}>
+                            {themeType === 'cinnamoroll' && (
+                                <Text style={{ fontSize: 40, marginBottom: -10 }}>😴</Text>
+                            )}
+                            <Text style={[styles.focusTimerText, { color: theme.textPrimary }]}>
                                 {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
                             </Text>
-                            <Text style={styles.focusLabel}>Focus</Text>
+                            <Text style={[styles.focusLabel, { color: theme.textSecondary }]}>Focus</Text>
                         </View>
                     </View>
 
                     {/* Control Buttons at Bottom */}
                     <View style={styles.controlsRow}>
                         <TouchableOpacity
-                            style={styles.iconButtonSecondary}
+                            style={[
+                                styles.iconButtonSecondary,
+                                {
+                                    backgroundColor: theme.cardBg,
+                                    borderColor: theme.border,
+                                    borderWidth: 1,
+                                    borderRadius: themeType === 'cinnamoroll' ? 15 : 28
+                                }
+                            ]}
                             onPress={reset}
                             accessibilityLabel="Reset"
                         >
-                            <FontAwesome name="rotate-right" size={24} color="#8E8E93" />
+                            <FontAwesome name="rotate-right" size={24} color={theme.textSecondary} />
                         </TouchableOpacity>
                         <TouchableOpacity
-                            style={[styles.iconButton, displayIsRunning && styles.pauseButton]}
+                            style={[
+                                styles.iconButton,
+                                {
+                                    backgroundColor: theme.primary,
+                                    shadowColor: theme.primary,
+                                    borderRadius: themeType === 'cinnamoroll' ? 30 : 20, // More cloud-like for Cinnamoroll
+                                },
+                                displayIsRunning && { backgroundColor: '#FF6B6B', shadowColor: '#FF6B6B' }
+                            ]}
                             onPress={startPause}
                             accessibilityLabel={displayIsRunning ? 'Pause' : 'Start'}
                         >
@@ -239,7 +321,7 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
             ) : (
                 /* Task Mode Layout */
                 <>
-                    <Text style={styles.modeDescription}>
+                    <Text style={[styles.modeDescription, { color: theme.textSecondary }]}>
                         {isTaskMode
                             ? `${session?.timer_type === 'work' ? 'Work Session' : session?.break_type === 'short' ? 'Short Break' : 'Long Break'}`
                             : 'Select a task to start tracking'}
@@ -248,12 +330,20 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
                     {/* Circular Timer */}
                     <View style={styles.circularTimerContainer}>
                         <Svg width={circleSize} height={circleSize} style={styles.circularTimer}>
+                            {themeType === 'cinnamoroll' && (
+                                <Defs>
+                                    <LinearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <Stop offset="0%" stopColor="#89CFF0" />
+                                        <Stop offset="100%" stopColor="#DDA0DD" />
+                                    </LinearGradient>
+                                </Defs>
+                            )}
                             {/* Background Circle */}
                             <Circle
                                 cx={circleSize / 2}
                                 cy={circleSize / 2}
                                 r={radius}
-                                stroke="#f0f0f0"
+                                stroke={themeType === 'cinnamoroll' ? 'rgba(255,255,255,0.4)' : theme.border}
                                 strokeWidth={strokeWidth}
                                 fill="none"
                             />
@@ -262,7 +352,7 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
                                 cx={circleSize / 2}
                                 cy={circleSize / 2}
                                 r={radius}
-                                stroke={Colors.primary}
+                                stroke={themeType === 'cinnamoroll' ? "url(#timerGradient)" : theme.primary}
                                 strokeWidth={strokeWidth}
                                 fill="none"
                                 strokeDasharray={circumference}
@@ -275,13 +365,16 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
 
                         {/* Timer Display */}
                         <View style={styles.timerTextContainer}>
-                            <Text style={styles.timerText}>
+                            {themeType === 'cinnamoroll' && (
+                                <Text style={{ fontSize: 40, marginBottom: -10 }}>🐶</Text>
+                            )}
+                            <Text style={[styles.timerText, { color: theme.textPrimary }]}>
                                 {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
                             </Text>
                             {getProgressText() && (
-                                <Text style={styles.progressText}>{getProgressText()}</Text>
+                                <Text style={[styles.progressText, { color: themeType === 'cinnamoroll' ? '#89CFF0' : theme.primary }]}>{getProgressText()}</Text>
                             )}
-                            <Text style={styles.timerLabel}>
+                            <Text style={[styles.timerLabel, { color: theme.textSecondary }]}>
                                 {displayIsRunning ? 'In Progress' : 'Paused'}
                             </Text>
                         </View>
@@ -290,11 +383,19 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
                     {/* Control Buttons */}
                     <View style={styles.controlsRow}>
                         <TouchableOpacity
-                            style={[styles.iconButton, displayIsRunning && styles.pauseButton]}
+                            style={[
+                                styles.iconButton,
+                                {
+                                    backgroundColor: theme.primary,
+                                    shadowColor: theme.primary,
+                                    borderRadius: themeType === 'cinnamoroll' ? 30 : 20,
+                                },
+                                displayIsRunning && { backgroundColor: '#FF6B6B', shadowColor: '#FF6B6B' }
+                            ]}
                             onPress={startPause}
                             accessibilityLabel={displayIsRunning ? 'Pause' : 'Start'}
                         >
-                            <FontAwesome name={displayIsRunning ? "pause" : "play"} size={32} color="white" />
+                            <FontAwesome name={displayIsRunning ? "pause" : "play"} size={32} color="white" style={{ marginLeft: displayIsRunning ? 0 : 3 }} />
                         </TouchableOpacity>
                     </View>
                 </>
@@ -319,14 +420,12 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#1C1C1E',
         marginBottom: 4,
     },
 
     // Mode Description
     modeDescription: {
         fontSize: 14,
-        color: Colors.textSecondary,
         marginBottom: 32,
         textAlign: 'center',
         fontWeight: '500',
@@ -355,24 +454,20 @@ const styles = StyleSheet.create({
     timerText: {
         fontSize: 56,
         fontWeight: '700',
-        color: Colors.textPrimary,
         letterSpacing: 2,
     },
     focusTimerText: {
         fontSize: 64,
         fontWeight: '700',
         letterSpacing: -2,
-        color: '#1C1C1E',
     },
     progressText: {
         fontSize: 18,
         fontWeight: '600',
-        color: Colors.primary,
         marginTop: 4,
     },
     timerLabel: {
         fontSize: 14,
-        color: Colors.textSecondary,
         marginTop: 4,
         fontWeight: '500',
         textTransform: 'uppercase',
@@ -380,7 +475,6 @@ const styles = StyleSheet.create({
     },
     focusLabel: {
         fontSize: 16,
-        color: '#8E8E93',
         marginTop: 8,
         fontWeight: '500',
     },
@@ -396,34 +490,16 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         paddingHorizontal: 24,
         borderRadius: 20,
-        backgroundColor: '#F2F2F7',
-        borderWidth: 0,
         alignItems: 'center',
         justifyContent: 'center',
         minWidth: 70,
     },
-    presetActive: {
-        backgroundColor: Colors.primary,
-    },
     presetDisabled: {
         opacity: 0.5,
-    },
-    presetTextDisabled: {
-        color: '#9ca3af',
     },
     presetText: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#8E8E93',
-    },
-    presetTextActive: {
-        color: Colors.white,
-    },
-    presetLabel: {
-        display: 'none',
-    },
-    presetLabelActive: {
-        display: 'none',
     },
 
     // Controls
@@ -437,26 +513,19 @@ const styles = StyleSheet.create({
         width: 72,
         height: 72,
         borderRadius: 20,
-        backgroundColor: Colors.primary,
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: Colors.primary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 12,
         elevation: 6,
     },
-    pauseButton: {
-        backgroundColor: '#FF6B6B',
-        shadowColor: '#FF6B6B',
-    },
     iconButtonSecondary: {
         width: 56,
         height: 56,
         borderRadius: 28,
-        backgroundColor: '#F2F2F7',
-        borderWidth: 0,
         alignItems: 'center',
         justifyContent: 'center',
     },
 });
+

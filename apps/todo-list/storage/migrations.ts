@@ -136,6 +136,31 @@ INSERT OR IGNORE INTO categories (id, name, color, isDefault, createdAt) VALUES
 
 COMMIT;
 `
+  },
+  {
+    name: '005_reset_database.sql',
+    sql: `
+BEGIN TRANSACTION;
+
+-- Clear all existing data
+DELETE FROM task_tags;
+DELETE FROM subtasks;
+DELETE FROM pomodoro_sessions;
+DELETE FROM tasks;
+DELETE FROM tags;
+DELETE FROM categories;
+
+-- Insert predefined categories
+INSERT INTO categories (id, name, color, isDefault, createdAt) VALUES
+  ('cat_personal', 'Personal', '#8b5cf6', 1, datetime('now')),
+  ('cat_work', 'Work', '#3b82f6', 1, datetime('now')),
+  ('cat_habit', 'Habit', '#10b981', 1, datetime('now')),
+  ('cat_projects', 'Projects', '#f59e0b', 1, datetime('now')),
+  ('cat_others', 'Others', '#6b7280', 1, datetime('now')),
+  ('cat_completed', 'Completed', '#94a3b8', 1, datetime('now'));
+
+COMMIT;
+`
   }
 ];
 

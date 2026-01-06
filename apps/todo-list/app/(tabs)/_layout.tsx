@@ -1,10 +1,9 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { TimerProvider, useTimer } from '@/contexts/TimerContext';
 import { Alert, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Colors from '@/constants/Colors';
+import { Colors } from '@/constants/Colors';
 
 function TabsContent() {
   const { isTimerRunning } = useTimer();
@@ -17,7 +16,7 @@ function TabsContent() {
           tabBarActiveTintColor: Colors.primary,
           tabBarInactiveTintColor: Colors.textSecondary,
           tabBarStyle: {
-            backgroundColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.85)' : Colors.white,
+            backgroundColor: Platform.OS === 'ios' ? 'rgba(255, 255, 255, 0.85)' : 'transparent',
             borderTopWidth: 0,
             elevation: 0,
             shadowColor: '#000',
