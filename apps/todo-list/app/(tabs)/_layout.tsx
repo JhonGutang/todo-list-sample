@@ -105,19 +105,6 @@ function TabsContent() {
             ),
           }}
         />
-        <Tabs.Screen
-          name="sample"
-          options={{
-            title: 'Sample',
-            tabBarIcon: ({ color, size, focused }) => (
-              <Ionicons
-                name={focused ? "layers" : "layers-outline"}
-                color={color}
-                size={24}
-              />
-            ),
-          }}
-        />
       </Tabs>
     </SafeAreaView>
   );
