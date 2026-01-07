@@ -67,7 +67,7 @@ export default function TaskDetail() {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteTask = async () => {
     if (!id || !task) return;
     try {
       await deleteTask(id);
@@ -171,6 +171,61 @@ export default function TaskDetail() {
     }
   };
 
+  const handleSubtaskSave = async (title: string) => {
+    if (!id) return;
+
+    if (editingSubtask) {
+      // Optimistic update for editing
+      const updatedSubtasks = subtasks.map((st) =>
+        st.id === editingSubtask.id ? { ...st, title } : st
+      );
+      setSubtasks(updatedSubtasks);
+      updateTaskSubtasks(id, updatedSubtasks);
+
+      setSubtaskModal(false);
+      setEditingSubtask(undefined);
+
+      // Update database in background
+      try {
+        await updateSubtask(editingSubtask.id, { title });
+      } catch (error) {
+        console.error('Failed to update subtask:', error);
+        // Reload on error
+        await loadTask();
+      }
+    } else {
+      // Optimistic update for adding
+      const tempId = 'temp_' + Date.now();
+      const newSubtask: Subtask = {
+        id: tempId,
+        task_id: id,
+        title,
+        completed: false,
+        order: subtasks.length,
+      };
+
+      const updatedSubtasks = [...subtasks, newSubtask];
+      setSubtasks(updatedSubtasks);
+      updateTaskSubtasks(id, updatedSubtasks);
+      setSubtaskModal(false);
+
+      // Add to database in background
+      try {
+        const created = await addSubtask(id, { title });
+        // Replace temp subtask with real one
+        const finalSubtasks = updatedSubtasks.map((st) => (st.id === tempId ? created : st));
+        setSubtasks(finalSubtasks);
+        updateTaskSubtasks(id, finalSubtasks);
+      } catch (error) {
+        console.error('Failed to add subtask:', error);
+        // Remove temp subtask on error
+        const revertedSubtasks = subtasks.filter((st) => st.id !== tempId);
+        setSubtasks(revertedSubtasks);
+        updateTaskSubtasks(id, revertedSubtasks);
+      }
+    }
+  };
+
   const getPriorityColor = (priority?: string) => {
     if (priority === 'high') return theme.priorityHigh;
     if (priority === 'medium') return theme.priorityMedium;
@@ -244,7 +299,7 @@ export default function TaskDetail() {
             <Pressable
               onPress={() => {
                 setMenuOpen(false);
-                handleDelete();
+                handleDeleteTask();
               }}
               style={styles.menuItem}
             >
@@ -262,60 +317,7 @@ export default function TaskDetail() {
             setSubtaskModal(false);
             setEditingSubtask(undefined);
           }}
-          onSave={async (title) => {
-            if (!id) return;
-
-            if (editingSubtask) {
-              // Optimistic update for editing
-              const updatedSubtasks = subtasks.map((st) =>
-                st.id === editingSubtask.id ? { ...st, title } : st
-              );
-              setSubtasks(updatedSubtasks);
-              if (id) updateTaskSubtasks(id, updatedSubtasks);
-
-              setSubtaskModal(false);
-              setEditingSubtask(undefined);
-
-              // Update database in background
-              try {
-                await updateSubtask(editingSubtask.id, { title });
-              } catch (error) {
-                console.error('Failed to update subtask:', error);
-                // Reload on error
-                await loadTask();
-              }
-            } else {
-              // Optimistic update for adding
-              const tempId = 'temp_' + Date.now();
-              const newSubtask: Subtask = {
-                id: tempId,
-                task_id: id,
-                title,
-                completed: false,
-                order: subtasks.length,
-              };
-
-              const updatedSubtasks = [...subtasks, newSubtask];
-              setSubtasks(updatedSubtasks);
-              if (id) updateTaskSubtasks(id, updatedSubtasks);
-              setSubtaskModal(false);
-
-              // Add to database in background
-              try {
-                const created = await addSubtask(id, { title });
-                // Replace temp subtask with real one
-                const finalSubtasks = updatedSubtasks.map((st) => (st.id === tempId ? created : st));
-                setSubtasks(finalSubtasks);
-                if (id) updateTaskSubtasks(id, finalSubtasks);
-              } catch (error) {
-                console.error('Failed to add subtask:', error);
-                // Remove temp subtask on error
-                const revertedSubtasks = subtasks.filter((st) => st.id !== tempId);
-                setSubtasks(revertedSubtasks);
-                if (id) updateTaskSubtasks(id, revertedSubtasks);
-              }
-            }
-          }}
+          onSave={handleSubtaskSave}
         />
 
         {/* Task Title with Checkbox */}
