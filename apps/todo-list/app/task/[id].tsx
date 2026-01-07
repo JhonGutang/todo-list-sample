@@ -16,6 +16,8 @@ import { getSubtasksForTask, addSubtask, updateSubtask, toggleSubtask, deleteSub
 import { initDb, getAllCategories } from '../../services';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useTasks } from '../../contexts/TasksContext';
+import PersonalNotesSection from '../../components/tasks/PersonalNotesSection';
+
 
 export default function TaskDetail() {
   const params = useLocalSearchParams();
@@ -493,29 +495,8 @@ export default function TaskDetail() {
           )}
         </View>
 
-        {/* Personal Notes Section - Disabled for now */}
-        {/* <View style={[styles.notesCard, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-          <View style={styles.notesHeader}>
-            <Ionicons name="document-text" size={20} color={theme.textPrimary} />
-            <Text style={[styles.notesTitle, { color: theme.textPrimary }]}>Personal Notes</Text>
-          </View>
-          <TextInput
-            style={[
-              styles.notesInput,
-              {
-                backgroundColor: theme.background,
-                borderColor: theme.border,
-                color: theme.textPrimary
-              }
-            ]}
-            placeholder="Add your personal notes here..."
-            placeholderTextColor={theme.textTertiary}
-            value={personalNotes}
-            onChangeText={setPersonalNotes}
-            multiline
-            textAlignVertical="top"
-          />
-        </View> */}
+        {/* Personal Notes Section */}
+        {id && <PersonalNotesSection taskId={id} />}
       </ScrollView>
 
       {/* Category Selector Modal */}

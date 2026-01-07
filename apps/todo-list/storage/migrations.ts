@@ -177,6 +177,31 @@ CREATE INDEX IF NOT EXISTS idx_tasks_startTime ON tasks(startTime);
 
 COMMIT;
 `
+  },
+  {
+    name: '007_add_task_notes.sql',
+    sql: `
+BEGIN TRANSACTION;
+
+-- Create task_notes table with one-to-one relationship to tasks
+CREATE TABLE IF NOT EXISTS task_notes (
+  id TEXT PRIMARY KEY,
+  task_id TEXT NOT NULL UNIQUE,
+  content TEXT NOT NULL DEFAULT '',
+  character_count INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+);
+
+-- Index for efficient task lookups
+CREATE INDEX IF NOT EXISTS idx_task_notes_task_id ON task_notes(task_id);
+
+-- Index for updated_at to support future features (e.g., "recently edited notes")
+CREATE INDEX IF NOT EXISTS idx_task_notes_updated_at ON task_notes(updated_at);
+
+COMMIT;
+`
   }
 ];
 

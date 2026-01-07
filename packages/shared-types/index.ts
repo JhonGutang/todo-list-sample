@@ -97,5 +97,21 @@ export interface PomodoroSessionWithTask extends PomodoroSession {
   }>;
 }
 
+// Task Notes Types
+export interface TaskNote {
+  id: string;
+  task_id: string;
+  content: string;
+  character_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Helper type for task detail screen with note
+ */
+export type TaskWithNote = Task & {
+  note?: TaskNote | null;
+};
 
 
