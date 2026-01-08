@@ -4,7 +4,7 @@
     "slug": "todo-list",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/momentum-icon.png",
     "scheme": "momentum",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,

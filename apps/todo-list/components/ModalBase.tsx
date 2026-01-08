@@ -9,18 +9,41 @@ import {
     KeyboardAvoidingView,
     Platform,
     DimensionValue,
+    Dimensions,
 } from 'react-native';
-
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../contexts/ThemeContext';
+import { useWindowDimensions } from 'react-native';
 
 type Props = {
     visible: boolean;
     onClose: () => void;
     children: React.ReactNode;
-    maxHeight?: DimensionValue;
+    maxHeight?: DimensionValue; // number | percentage
     useKeyboardAvoidingView?: boolean;
 };
+
+
+
+/**
+ * Resolve maxHeight ONCE into a fixed height
+ */
+function resolveHeight(maxHeight: DimensionValue | undefined, windowHeight: number): number {
+    if (!maxHeight) return windowHeight * 0.85;
+
+    if (typeof maxHeight === 'number') {
+        return maxHeight;
+    }
+
+    if (typeof maxHeight === 'string' && maxHeight.endsWith('%')) {
+        const percent = parseFloat(maxHeight) / 100;
+        return windowHeight * percent;
+    }
+
+    return windowHeight * 0.85;
+}
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('screen');
 
 export default function ModalBase({
     visible,
@@ -29,13 +52,22 @@ export default function ModalBase({
     maxHeight = '85%',
     useKeyboardAvoidingView = false,
 }: Props) {
-    const [isMounted, setIsMounted] = useState(visible);
+    const { height: windowHeight } = useWindowDimensions();
+    const insets = useSafeAreaInsets();
     const anim = useRef(new Animated.Value(0)).current;
     const { theme } = useTheme();
+    const [isMounted, setIsMounted] = useState(visible);
+
+    // 🔒 Fixed height resolved only when opening
+    const [sheetHeight, setSheetHeight] = useState<number>(() =>
+        resolveHeight(maxHeight, windowHeight)
+    );
 
     useEffect(() => {
         if (visible) {
+            setSheetHeight(resolveHeight(maxHeight, windowHeight));
             setIsMounted(true);
+
             Animated.timing(anim, {
                 toValue: 1,
                 duration: 300,
@@ -52,48 +84,65 @@ export default function ModalBase({
                 setIsMounted(false);
             });
         }
-    }, [visible, anim]);
+    }, [visible, maxHeight, anim, windowHeight]);
 
     if (!isMounted) return null;
 
-    const backdropOpacity = anim.interpolate({ inputRange: [0, 1], outputRange: [0, 0.4] });
-    const translateY = anim.interpolate({ inputRange: [0, 1], outputRange: [400, 0] });
+    const backdropOpacity = anim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0, 0.4],
+    });
+
+    // ✅ CONSTANT outputRange using Screen Height → no stutter even if window shrinks
+    const translateY = anim.interpolate({
+        inputRange: [0, 1],
+        outputRange: [SCREEN_HEIGHT, 0],
+    });
 
     const InnerContent = (
         <View style={styles.absoluteFill} pointerEvents="box-none">
+            {/* Backdrop */}
             <TouchableOpacity
                 style={styles.absoluteFill}
                 activeOpacity={1}
                 onPress={onClose}
             >
-                <Animated.View style={[styles.backdrop, { opacity: backdropOpacity }]} />
+                <Animated.View
+                    style={[styles.backdrop, { opacity: backdropOpacity }]}
+                />
             </TouchableOpacity>
 
+            {/* Bottom Sheet */}
             <Animated.View
                 style={[
                     styles.sheet,
                     {
+                        height: sheetHeight, // 🔒 FIXED HEIGHT
                         transform: [{ translateY }],
-                        maxHeight,
                         backgroundColor: theme.modalBg || theme.cardBg,
                         borderTopLeftRadius: theme.cardRadius,
                         borderTopRightRadius: theme.cardRadius,
-                    }
+                        paddingBottom: insets.bottom,
+                    },
                 ]}
             >
-                <SafeAreaView edges={['bottom']}>
-                    {children}
-                </SafeAreaView>
+                {children}
             </Animated.View>
         </View>
     );
 
     return (
-        <Modal visible={isMounted} transparent animationType="none">
+        <Modal
+            visible={isMounted}
+            transparent
+            animationType="none"
+            onRequestClose={onClose}
+        >
             {useKeyboardAvoidingView ? (
                 <KeyboardAvoidingView
-                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                     style={styles.absoluteFill}
+                    // 🚨 CRITICAL: prevents shrink + avoids stutter
+                    behavior={Platform.OS === 'ios' ? 'position' : undefined}
                 >
                     {InnerContent}
                 </KeyboardAvoidingView>
@@ -122,5 +171,8 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 5,
         overflow: 'hidden',
+    },
+    safeArea: {
+        flex: 1,
     },
 });

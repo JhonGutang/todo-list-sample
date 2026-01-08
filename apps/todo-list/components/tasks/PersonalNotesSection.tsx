@@ -138,7 +138,7 @@ export default function PersonalNotesSection({ taskId }: Props) {
             <ModalBase
                 visible={isExpanded}
                 onClose={handleClose}
-                maxHeight="60%"
+                maxHeight="50%"
                 useKeyboardAvoidingView={true}
             >
                 <View style={styles.editorContainer}>
@@ -161,11 +161,7 @@ export default function PersonalNotesSection({ taskId }: Props) {
                     </View>
 
                     {/* Text Editor - Scrollable */}
-                    <ScrollView
-                        style={styles.editorScrollView}
-                        contentContainerStyle={styles.editorScrollContent}
-                        keyboardShouldPersistTaps="handled"
-                    >
+                    <View style={styles.editorBody}>
                         <TextInput
                             style={[
                                 styles.textEditor,
@@ -179,11 +175,13 @@ export default function PersonalNotesSection({ taskId }: Props) {
                             placeholder="Start typing your notes..."
                             placeholderTextColor={theme.textTertiary}
                             multiline
+                            scrollEnabled={true}
                             textAlignVertical="top"
                             autoFocus
                             maxLength={MAX_CHARACTERS}
                         />
-                    </ScrollView>
+                    </View>
+
                 </View>
             </ModalBase>
         </>
@@ -220,16 +218,11 @@ const styles = StyleSheet.create({
         fontSize: 15,
         lineHeight: 22,
     },
-
-    // Editor Modal Styles
     editorContainer: {
-        height: Dimensions.get('window').height * 0.6, // Fixed 60% height
-    },
-    editorScrollView: {
         flex: 1,
     },
-    editorScrollContent: {
-        flexGrow: 1,
+    editorBody: {
+        flex: 1,
     },
     editorHeader: {
         flexDirection: 'row',
@@ -260,7 +253,7 @@ const styles = StyleSheet.create({
         padding: 4,
     },
     textEditor: {
-        minHeight: Dimensions.get('window').height * 0.5, // Minimum height for scrolling
+        flex: 1,          // ✅ KEY FIX
         padding: 16,
         fontSize: 16,
         lineHeight: 24,

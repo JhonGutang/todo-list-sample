@@ -10,6 +10,7 @@ interface ThemeContextType {
     themeType: ThemeType;
     setTheme: (type: ThemeType) => Promise<void>;
     isDark: boolean;
+    themeLoaded: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -17,6 +18,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const systemColorScheme = useColorScheme();
     const [themeType, setThemeType] = useState<ThemeType>('light');
+    const [themeLoaded, setThemeLoaded] = useState(false);
 
     useEffect(() => {
         // Load theme from settings
@@ -30,6 +32,8 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 }
             } catch (error) {
                 console.error('Failed to load theme:', error);
+            } finally {
+                setThemeLoaded(true);
             }
         };
 
@@ -49,7 +53,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const isDark = themeType === 'dark' || themeType === 'lantern-night';
 
     return (
-        <ThemeContext.Provider value={{ theme, themeType, setTheme: handleSetTheme, isDark }}>
+        <ThemeContext.Provider value={{ theme, themeType, setTheme: handleSetTheme, isDark, themeLoaded }}>
             {children}
         </ThemeContext.Provider>
     );

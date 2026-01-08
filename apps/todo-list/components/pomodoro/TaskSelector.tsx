@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, LayoutAnimation, Animated } from 'react-native'
 import { Task, PomodoroConfig } from '@todolist/shared-types';
 import { getAllTasks } from '@/services/tasks';
 import { getSubtasksForTask } from '@/services/subtasks';
+import { useTheme } from '@/contexts/ThemeContext';
 import TaskList from './TaskList';
 import SessionConfig from './SessionConfig';
 
@@ -12,6 +13,7 @@ interface TaskSelectorProps {
 }
 
 export default function TaskSelector({ onStartSession, refreshKey }: TaskSelectorProps) {
+    const { theme } = useTheme();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [subtaskCount, setSubtaskCount] = useState(0);
@@ -25,7 +27,7 @@ export default function TaskSelector({ onStartSession, refreshKey }: TaskSelecto
 
     useEffect(() => {
         loadTasks();
-    }, []);
+    }, [refreshKey]);
 
     useEffect(() => {
         if (selectedTask) {
@@ -94,8 +96,8 @@ export default function TaskSelector({ onStartSession, refreshKey }: TaskSelecto
     if (!selectedTask) {
         return (
             <View style={styles.container}>
-                <Text style={styles.title}>Select a Task</Text>
-                <Text style={styles.subtitle}>Choose a task to start your Pomodoro session</Text>
+                <Text style={[styles.title, { color: theme.textPrimary }]}>Select a Task</Text>
+                <Text style={[styles.subtitle, { color: theme.textSecondary }]}>Choose a task to start your Pomodoro session</Text>
                 <TaskList
                     tasks={tasks}
                     onSelectTask={handleTaskSelect}
@@ -136,14 +138,12 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#1f2937',
         textAlign: 'center',
         marginTop: 16,
         marginBottom: 8,
     },
     subtitle: {
         fontSize: 14,
-        color: '#6b7280',
         textAlign: 'center',
         marginBottom: 24,
     },

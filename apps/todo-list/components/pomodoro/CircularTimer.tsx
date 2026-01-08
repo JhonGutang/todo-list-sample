@@ -298,7 +298,7 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
                                     shadowColor: theme.primary,
                                     borderRadius: 20,
                                 },
-                                displayIsRunning && { backgroundColor: '#FF6B6B', shadowColor: '#FF6B6B' }
+                                displayIsRunning && { backgroundColor: theme.priorityHigh, shadowColor: theme.priorityHigh }
                             ]}
                             onPress={startPause}
                             accessibilityLabel={displayIsRunning ? 'Pause' : 'Start'}
@@ -368,7 +368,7 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
                                     shadowColor: theme.primary,
                                     borderRadius: 20,
                                 },
-                                displayIsRunning && { backgroundColor: '#FF6B6B', shadowColor: '#FF6B6B' }
+                                displayIsRunning && { backgroundColor: theme.priorityHigh, shadowColor: theme.priorityHigh }
                             ]}
                             onPress={startPause}
                             accessibilityLabel={displayIsRunning ? 'Pause' : 'Start'}

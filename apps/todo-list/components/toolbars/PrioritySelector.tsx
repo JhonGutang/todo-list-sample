@@ -26,7 +26,7 @@ export default function PrioritySelector({ selectedPriority, onSelect, visible, 
     };
 
     return (
-        <ModalBase visible={visible} onClose={onClose}>
+        <ModalBase visible={visible} onClose={onClose} maxHeight="22%">
             <View style={[styles.content, { paddingBottom: 20 }]}>
                 {priorities.map((p) => (
                     <TouchableOpacity

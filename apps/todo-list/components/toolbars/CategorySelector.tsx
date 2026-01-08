@@ -36,7 +36,7 @@ export default function CategorySelector({
         });
 
     return (
-        <ModalBase visible={visible} onClose={onClose}>
+        <ModalBase visible={visible} onClose={onClose} maxHeight="33%">
             <View style={[styles.content, { paddingBottom: 20 }]}>
                 {selectableCategories.map((cat) => (
                     <TouchableOpacity

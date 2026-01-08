@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 
 import { View, Text, StyleSheet, Pressable, ScrollView, TextInput } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Task, Subtask, Category, Priority } from '@todolist/shared-types';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import useDateFormatter from '../../hooks/useDateFormatter';
 import Chip from '../../components/Chip';
-import AddSubtaskModal from '../../components/tasks/AddSubtaskModal';
 import CategorySelector from '../../components/toolbars/CategorySelector';
 import PrioritySelector from '../../components/toolbars/PrioritySelector';
 import TimeInput, { TimeInputRef } from '../../components/toolbars/TimeInput';
@@ -30,14 +30,16 @@ export default function TaskDetail() {
   const [subtasks, setSubtasks] = useState<Subtask[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [subtaskModal, setSubtaskModal] = useState(false);
-  const [editingSubtask, setEditingSubtask] = useState<Subtask | undefined>(undefined);
-  const [personalNotes, setPersonalNotes] = useState('');
+  const [isEditingTaskName, setIsEditingTaskName] = useState(false);
+  const [editedTaskName, setEditedTaskName] = useState('');
+  const [isAddingSubtask, setIsAddingSubtask] = useState(false);
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
   const [showCategorySelector, setShowCategorySelector] = useState(false);
   const [showPrioritySelector, setShowPrioritySelector] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const timeInputRef = useRef<TimeInputRef>(null);
+  const newSubtaskInputRef = useRef<TextInput>(null);
+  const taskNameInputRef = useRef<TextInput>(null);
 
   useEffect(() => {
     if (id) {
@@ -76,6 +78,41 @@ export default function TaskDetail() {
       router.back();
     } catch (error) {
       console.error('Failed to delete task:', error);
+    }
+  };
+
+  const handleTaskNameEdit = () => {
+    if (!task) return;
+    setEditedTaskName(task.name);
+    setIsEditingTaskName(true);
+    // Focus the input after state update
+    setTimeout(() => taskNameInputRef.current?.focus(), 100);
+  };
+
+  const handleTaskNameSave = async () => {
+    if (!id || !task || !editedTaskName.trim()) {
+      setIsEditingTaskName(false);
+      return;
+    }
+
+    const newName = editedTaskName.trim();
+    if (newName === task.name) {
+      setIsEditingTaskName(false);
+      return;
+    }
+
+    // Optimistic update
+    const previousName = task.name;
+    setTask({ ...task, name: newName });
+    setIsEditingTaskName(false);
+
+    // Update database in background
+    try {
+      await updateTask(id, { name: newName });
+    } catch (error) {
+      console.error('Failed to update task name:', error);
+      // Revert on error
+      setTask({ ...task, name: previousName });
     }
   };
 
@@ -173,58 +210,42 @@ export default function TaskDetail() {
     }
   };
 
-  const handleSubtaskSave = async (title: string) => {
-    if (!id) return;
+  const handleAddSubtask = async () => {
+    if (!id || !newSubtaskTitle.trim()) return;
 
-    if (editingSubtask) {
-      // Optimistic update for editing
-      const updatedSubtasks = subtasks.map((st) =>
-        st.id === editingSubtask.id ? { ...st, title } : st
-      );
-      setSubtasks(updatedSubtasks);
-      updateTaskSubtasks(id, updatedSubtasks);
+    const title = newSubtaskTitle.trim();
 
-      setSubtaskModal(false);
-      setEditingSubtask(undefined);
+    // Optimistic update for adding
+    const tempId = 'temp_' + Date.now();
+    const newSubtask: Subtask = {
+      id: tempId,
+      task_id: id,
+      title,
+      completed: false,
+      order: subtasks.length,
+    };
 
-      // Update database in background
-      try {
-        await updateSubtask(editingSubtask.id, { title });
-      } catch (error) {
-        console.error('Failed to update subtask:', error);
-        // Reload on error
-        await loadTask();
-      }
-    } else {
-      // Optimistic update for adding
-      const tempId = 'temp_' + Date.now();
-      const newSubtask: Subtask = {
-        id: tempId,
-        task_id: id,
-        title,
-        completed: false,
-        order: subtasks.length,
-      };
+    const updatedSubtasks = [...subtasks, newSubtask];
+    setSubtasks(updatedSubtasks);
+    updateTaskSubtasks(id, updatedSubtasks);
 
-      const updatedSubtasks = [...subtasks, newSubtask];
-      setSubtasks(updatedSubtasks);
-      updateTaskSubtasks(id, updatedSubtasks);
-      setSubtaskModal(false);
+    // Reset input state
+    setNewSubtaskTitle('');
+    setIsAddingSubtask(false);
 
-      // Add to database in background
-      try {
-        const created = await addSubtask(id, { title });
-        // Replace temp subtask with real one
-        const finalSubtasks = updatedSubtasks.map((st) => (st.id === tempId ? created : st));
-        setSubtasks(finalSubtasks);
-        updateTaskSubtasks(id, finalSubtasks);
-      } catch (error) {
-        console.error('Failed to add subtask:', error);
-        // Remove temp subtask on error
-        const revertedSubtasks = subtasks.filter((st) => st.id !== tempId);
-        setSubtasks(revertedSubtasks);
-        updateTaskSubtasks(id, revertedSubtasks);
-      }
+    // Add to database in background
+    try {
+      const created = await addSubtask(id, { title });
+      // Replace temp subtask with real one
+      const finalSubtasks = updatedSubtasks.map((st) => (st.id === tempId ? created : st));
+      setSubtasks(finalSubtasks);
+      updateTaskSubtasks(id, finalSubtasks);
+    } catch (error) {
+      console.error('Failed to add subtask:', error);
+      // Remove temp subtask on error
+      const revertedSubtasks = subtasks.filter((st) => st.id !== tempId);
+      setSubtasks(revertedSubtasks);
+      updateTaskSubtasks(id, revertedSubtasks);
     }
   };
 
@@ -255,7 +276,7 @@ export default function TaskDetail() {
 
   if (loading) {
     return (
-      <View style={[styles.container, { backgroundColor: 'transparent' }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
         <Pressable style={styles.back} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={20} color={theme.primary} />
           <Text style={[styles.backText, { color: theme.primary }]}>Back to Tasks</Text>
@@ -263,13 +284,13 @@ export default function TaskDetail() {
         <View style={styles.center}>
           <Text style={{ color: theme.textPrimary }}>Loading...</Text>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   if (!task) {
     return (
-      <View style={[styles.container, { backgroundColor: 'transparent' }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]}>
         <Pressable style={styles.back} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={20} color={theme.primary} />
           <Text style={[styles.backText, { color: theme.primary }]}>Back to Tasks</Text>
@@ -277,51 +298,26 @@ export default function TaskDetail() {
         <View style={styles.center}>
           <Text style={{ color: theme.textPrimary }}>Task not found</Text>
         </View>
-      </View>
+      </SafeAreaView>
     );
   }
 
   const category = getCategory();
 
   return (
-    <View style={[styles.container, { backgroundColor: 'transparent' }]}>
-      <Pressable style={styles.back} onPress={() => router.back()}>
-        <Ionicons name="arrow-back" size={20} color={theme.primary} />
-        <Text style={[styles.backText, { color: theme.primary }]}>Back to Tasks</Text>
-      </Pressable>
-      <View style={styles.topRight}>
-        <Pressable onPress={() => setMenuOpen((s) => !s)} style={styles.menuBtn}>
-          <Ionicons name="ellipsis-horizontal" size={24} color={theme.textPrimary} />
+    <SafeAreaView style={[styles.container, { backgroundColor: 'transparent' }]} edges={["bottom"]}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingRight: 16 }}>
+        <Pressable style={styles.back} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={20} color={theme.primary} />
+          <Text style={[styles.backText, { color: theme.primary }]}>Back to Tasks</Text>
         </Pressable>
-        {menuOpen ? (
-          <View style={[styles.menuPopup, { backgroundColor: theme.cardBg, borderColor: theme.border }]}>
-            <Pressable onPress={() => { setMenuOpen(false); /* TODO: implement edit */ }} style={styles.menuItem}>
-              <Text style={[styles.menuItemText, { color: theme.textPrimary }]}>Edit</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                setMenuOpen(false);
-                handleDeleteTask();
-              }}
-              style={styles.menuItem}
-            >
-              <Text style={[styles.menuItemText, { color: theme.priorityHigh }]}>Delete</Text>
-            </Pressable>
-          </View>
-        ) : null}
+        <Pressable onPress={handleDeleteTask} style={styles.deleteBtn}>
+          <Ionicons name="trash-outline" size={24} color={theme.priorityHigh} />
+        </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        <AddSubtaskModal
-          visible={subtaskModal}
-          initial={editingSubtask ? { title: editingSubtask.title } : undefined}
-          onClose={() => {
-            setSubtaskModal(false);
-            setEditingSubtask(undefined);
-          }}
-          onSave={handleSubtaskSave}
-        />
 
+      <ScrollView contentContainerStyle={styles.content}>
         {/* Task Title with Checkbox */}
         <View style={styles.titleSection}>
           <Pressable
@@ -344,7 +340,22 @@ export default function TaskDetail() {
           >
             {task.completed && <Ionicons name="checkmark" size={16} color={theme.white} />}
           </Pressable>
-          <Text style={[styles.title, { color: theme.textPrimary }]}>{task.name}</Text>
+          {isEditingTaskName ? (
+            <TextInput
+              ref={taskNameInputRef}
+              value={editedTaskName}
+              onChangeText={setEditedTaskName}
+              style={[styles.titleInput, { color: theme.textPrimary }]}
+              onSubmitEditing={handleTaskNameSave}
+              onBlur={handleTaskNameSave}
+              returnKeyType="done"
+              autoFocus
+            />
+          ) : (
+            <Pressable onPress={handleTaskNameEdit} style={styles.titlePressable}>
+              <Text style={[styles.title, { color: theme.textPrimary }]}>{task.name}</Text>
+            </Pressable>
+          )}
         </View>
 
         {/* Description */}
@@ -430,8 +441,10 @@ export default function TaskDetail() {
             </View>
             <Pressable
               onPress={() => {
-                setEditingSubtask(undefined);
-                setSubtaskModal(true);
+                setIsAddingSubtask(true);
+                setNewSubtaskTitle('');
+                // Focus the input after state update
+                setTimeout(() => newSubtaskInputRef.current?.focus(), 100);
               }}
               style={[styles.addSubtaskIconButton, { backgroundColor: theme.primary }]}
             >
@@ -439,7 +452,7 @@ export default function TaskDetail() {
             </Pressable>
           </View>
 
-          {subtasks.length === 0 ? (
+          {subtasks.length === 0 && !isAddingSubtask ? (
             <Text style={[styles.noSubtasksText, { color: theme.textSecondary }]}>No subtasks yet</Text>
           ) : (
             <View style={styles.subtasksList}>
@@ -491,6 +504,54 @@ export default function TaskDetail() {
                   </Pressable>
                 </View>
               ))}
+
+              {/* Inline Add Subtask Input */}
+              {isAddingSubtask && (
+                <View style={styles.subtaskRow}>
+                  <Pressable
+                    style={[styles.subtaskCheckbox, { borderColor: theme.border }]}
+                    onPress={() => {
+                      setIsAddingSubtask(false);
+                      setNewSubtaskTitle('');
+                    }}
+                  >
+                    <View style={[styles.radioButton, { borderColor: theme.textSecondary }]} />
+                  </Pressable>
+                  <TextInput
+                    ref={newSubtaskInputRef}
+                    value={newSubtaskTitle}
+                    onChangeText={setNewSubtaskTitle}
+                    style={[styles.subtaskInput, { color: theme.textPrimary }]}
+                    placeholder="New subtask"
+                    placeholderTextColor={theme.textTertiary}
+                    onSubmitEditing={handleAddSubtask}
+                    onBlur={() => {
+                      if (!newSubtaskTitle.trim()) {
+                        setIsAddingSubtask(false);
+                      }
+                    }}
+                    returnKeyType="done"
+                  />
+                  {newSubtaskTitle.trim() ? (
+                    <Pressable
+                      onPress={handleAddSubtask}
+                      style={styles.deleteSubtaskButton}
+                    >
+                      <Ionicons name="checkmark" size={18} color={theme.primary} />
+                    </Pressable>
+                  ) : (
+                    <Pressable
+                      onPress={() => {
+                        setIsAddingSubtask(false);
+                        setNewSubtaskTitle('');
+                      }}
+                      style={styles.deleteSubtaskButton}
+                    >
+                      <Ionicons name="close" size={18} color={theme.textSecondary} />
+                    </Pressable>
+                  )}
+                </View>
+              )}
             </View>
           )}
         </View>
@@ -535,7 +596,7 @@ export default function TaskDetail() {
           />
         </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -562,35 +623,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  topRight: {
-    position: 'absolute',
-    right: 12,
-    top: 12,
-    zIndex: 20,
-  },
-  menuBtn: {
+  deleteBtn: {
     padding: 8,
     borderRadius: 8,
-  },
-  menuPopup: {
-    position: 'absolute',
-    right: 0,
-    top: 36,
-    borderRadius: 8,
-    paddingVertical: 8,
-    width: 120,
-    borderWidth: 1,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  menuItem: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  menuItemText: {
-    fontWeight: '600',
   },
   titleSection: {
     flexDirection: 'row',
@@ -610,6 +645,16 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     flex: 1,
+  },
+  titlePressable: {
+    flex: 1,
+  },
+  titleInput: {
+    fontSize: 24,
+    fontWeight: '700',
+    flex: 1,
+    padding: 0,
+    margin: 0,
   },
   desc: {
     fontSize: 15,
@@ -705,6 +750,20 @@ const styles = StyleSheet.create({
   },
   deleteSubtaskButton: {
     padding: 4,
+  },
+  radioButton: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
+    backgroundColor: 'transparent',
+  },
+  subtaskInput: {
+    flex: 1,
+    fontSize: 15,
+    padding: 0,
+    borderWidth: 0,
+    backgroundColor: 'transparent',
   },
   notesCard: {
     padding: 16,

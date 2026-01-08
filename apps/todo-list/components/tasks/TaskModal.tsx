@@ -136,7 +136,7 @@ export default function TaskModal({ visible, onClose, onCreate }: Props) {
   const createDisabledBg = isDark ? 'rgba(255, 255, 255, 0.04)' : '#E5E7EB';
 
   return (
-    <ModalBase visible={visible} onClose={onClose} useKeyboardAvoidingView maxHeight="90%">
+    <ModalBase visible={visible} onClose={onClose} useKeyboardAvoidingView maxHeight="45%">
       <View style={styles.content}>
         <Text style={[styles.title, { color: theme.textPrimary }]}>Create Task</Text>
 

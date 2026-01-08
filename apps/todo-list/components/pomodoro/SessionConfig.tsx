@@ -44,7 +44,11 @@ export default function SessionConfig({
     const { theme, themeType } = useTheme();
 
     return (
-        <View style={styles.container}>
+        <ScrollView
+            style={styles.container}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+        >
             {/* Step 1: Selected Task */}
             <View style={styles.stepSection}>
                 <Text style={[styles.stepLabel, { color: theme.textSecondary }]}>Task Selected</Text>
@@ -268,13 +272,16 @@ export default function SessionConfig({
                     <Text style={[styles.startButtonText, { color: theme.white }]}>Start Session</Text>
                 </TouchableOpacity>
             </Animated.View>
-        </View>
+        </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+    },
+    scrollContent: {
+        paddingBottom: 24,
     },
     stepSection: {
         marginBottom: 16,

@@ -29,7 +29,15 @@ export default function SessionDisplay({ session, onCancel }: SessionDisplayProp
 
     return (
         <View style={styles.container}>
-            <View style={[styles.card, { backgroundColor: theme.cardBg, borderColor: theme.border, borderWidth: theme.cardBorderWidth }]}>
+            <View style={[
+                styles.card,
+                {
+                    backgroundColor: theme.cardBg,
+                    borderColor: theme.border,
+                    borderWidth: theme.cardBorderWidth,
+                    shadowColor: theme.shadowColor
+                }
+            ]}>
                 {/* Header Row: Timer Type Badge + Progress Counter + Cancel Icon */}
                 <View style={styles.headerRow}>
                     <View style={[styles.badge, { backgroundColor: progressColor }]}>
@@ -40,7 +48,7 @@ export default function SessionDisplay({ session, onCancel }: SessionDisplayProp
                             <Text style={[styles.progressCounterText, { color: theme.textPrimary }]}>{current_iteration}/{total_iterations}</Text>
                         </View>
                         <TouchableOpacity
-                            style={[styles.cancelButton, { backgroundColor: '#fef2f2' }]}
+                            style={[styles.cancelButton, { backgroundColor: theme.priorityHigh + '15' }]}
                             onPress={onCancel}
                         >
                             <FontAwesome name="times" size={18} color={theme.priorityHigh} />
@@ -93,7 +101,6 @@ const styles = StyleSheet.create({
         paddingTop: 16,
         paddingHorizontal: 16,
         paddingBottom: 0,
-        shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.08,
         shadowRadius: 8,
