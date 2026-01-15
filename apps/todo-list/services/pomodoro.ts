@@ -67,6 +67,18 @@ export async function createSession(
     const now = new Date().toISOString();
     const remainingSeconds = config.workDurationMinutes * 60;
 
+    // Get subtasks to find the first incomplete one
+    const subtasks = await getSubtasksForTask(taskId);
+    
+    // Find the first incomplete subtask index, or 0 if all are complete/no subtasks
+    let initialSubtaskIndex = 0;
+    if (subtasks.length > 0) {
+        const firstIncompleteIndex = subtasks.findIndex(s => !s.completed);
+        // If all subtasks are complete, start at the end (will be handled by the timer logic)
+        // Otherwise, start at the first incomplete subtask
+        initialSubtaskIndex = firstIncompleteIndex !== -1 ? firstIncompleteIndex : subtasks.length;
+    }
+
     await executeSqlAsync(
         `INSERT INTO pomodoro_sessions (
       id, task_id, work_duration_minutes, break_type, total_iterations,
@@ -80,7 +92,7 @@ export async function createSession(
             config.breakType,
             config.totalIterations,
             1, // current_iteration starts at 1
-            0, // current_subtask_index starts at 0
+            initialSubtaskIndex, // Start at first incomplete subtask
             'work', // timer_type starts with work
             remainingSeconds,
             0, // is_paused

@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Alert } from "rea
 import { useTheme } from "@/contexts/ThemeContext";
 import { Ionicons } from "@expo/vector-icons";
 import { resetDatabase } from "@/services";
+import { router } from "expo-router";
 
 export default function SettingsPage() {
     const { theme, themeType, setTheme, isDark } = useTheme();
@@ -86,7 +87,37 @@ export default function SettingsPage() {
                     <View style={styles.themeContainer}>
                         <ThemeOption type="light" icon="sunny-outline" label="Light Mode" />
                         <ThemeOption type="dark" icon="moon-outline" label="Dark Mode" />
-                        <ThemeOption type="lantern-night" icon="🌙" label="Lantern Night" isEmoji />
+                        
+                        {/* See More Themes Button */}
+                        <TouchableOpacity
+                            style={[
+                                styles.seeMoreButton,
+                                {
+                                    backgroundColor: theme.cardBg,
+                                    borderColor: theme.border,
+                                    borderRadius: 16,
+                                }
+                            ]}
+                            onPress={() => router.push('/themes')}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons
+                                name="color-palette-outline"
+                                size={24}
+                                color={theme.primary}
+                            />
+                            <Text style={[
+                                styles.seeMoreText,
+                                { color: theme.primary }
+                            ]}>
+                                See More Themes
+                            </Text>
+                            <Ionicons
+                                name="chevron-forward"
+                                size={20}
+                                color={theme.textSecondary}
+                            />
+                        </TouchableOpacity>
                     </View>
                 </View>
 
@@ -224,5 +255,18 @@ const styles = StyleSheet.create({
     resetButtonText: {
         fontSize: 16,
         fontWeight: '600',
-    }
+    },
+    seeMoreButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        borderRadius: 16,
+        borderWidth: 1,
+        gap: 12,
+    },
+    seeMoreText: {
+        fontSize: 16,
+        fontWeight: '600',
+        flex: 1,
+    },
 });

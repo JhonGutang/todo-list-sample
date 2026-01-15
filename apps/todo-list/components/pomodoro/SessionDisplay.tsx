@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { PomodoroSessionWithTask } from '@todolist/shared-types';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -38,15 +38,20 @@ export default function SessionDisplay({ session, onCancel }: SessionDisplayProp
                     shadowColor: theme.shadowColor
                 }
             ]}>
-                {/* Header Row: Timer Type Badge + Progress Counter + Cancel Icon */}
+                {/* Header Row: Task Title + Subtask Count + Cancel Icon */}
                 <View style={styles.headerRow}>
-                    <View style={[styles.badge, { backgroundColor: progressColor }]}>
-                        <Text style={[styles.badgeText, { color: theme.white }]}>{timerTypeLabel}</Text>
-                    </View>
+                    <Text style={[styles.taskName, { color: theme.textPrimary }]} numberOfLines={1}>
+                        {task.name}
+                    </Text>
                     <View style={styles.headerRight}>
-                        <View style={[styles.progressCounter, { backgroundColor: theme.background }]}>
-                            <Text style={[styles.progressCounterText, { color: theme.textPrimary }]}>{current_iteration}/{total_iterations}</Text>
-                        </View>
+                        {subtasks.length > 0 && (
+                            <View style={[styles.subtaskCounter, { backgroundColor: theme.background }]}>
+                                <FontAwesome name="check-square-o" size={12} color={theme.textSecondary} style={{ marginRight: 4 }} />
+                                <Text style={[styles.subtaskCounterText, { color: theme.textSecondary }]}>
+                                    {subtasks.filter(s => s.completed).length}/{subtasks.length}
+                                </Text>
+                            </View>
+                        )}
                         <TouchableOpacity
                             style={[styles.cancelButton, { backgroundColor: theme.priorityHigh + '15' }]}
                             onPress={onCancel}
@@ -56,35 +61,62 @@ export default function SessionDisplay({ session, onCancel }: SessionDisplayProp
                     </View>
                 </View>
 
-                {/* Task Name */}
-                <Text style={[styles.taskName, { color: theme.textPrimary }]}>{task.name}</Text>
-
-                {/* Current Subtask */}
-                {currentSubtask && isWork && (
-                    <View style={[styles.subtaskRow, { backgroundColor: theme.background }]}>
-                        <FontAwesome name="arrow-right" size={12} color={theme.primary} />
-                        <Text style={[styles.subtaskText, { color: theme.textPrimary }]} numberOfLines={1}>{currentSubtask.title}</Text>
-                    </View>
-                )}
-
-                {/* Subtask Progress (if applicable) */}
+                {/* Subtasks Section */}
                 {subtasks.length > 0 && (
-                    <Text style={[styles.subtaskProgress, { color: theme.textSecondary }]}>
-                        Subtasks: {subtasks.filter((s) => s.completed).length}/{subtasks.length}
-                    </Text>
-                )}
+                    <>
+                        <Text style={[styles.subtasksHeader, { color: theme.textSecondary }]}>Subtasks</Text>
+                        <ScrollView 
+                            style={styles.subtasksScrollView}
+                            showsVerticalScrollIndicator={true}
+                            contentContainerStyle={styles.subtasksScrollContent}
+                        >
+                            {subtasks.map((subtask, index) => {
+                                const isActive = current_subtask_index === index;
+                                const isCompleted = subtask.completed;
 
-                {/* Progress Bar as Bottom Border */}
-                <View style={styles.progressBarContainer}>
-                    <View style={[styles.progressBarBg, { backgroundColor: theme.border }]}>
-                        <View
-                            style={[
-                                styles.progressBarFill,
-                                { width: `${progressPercent}%`, backgroundColor: progressColor },
-                            ]}
-                        />
-                    </View>
-                </View>
+                                return (
+                                    <View
+                                        key={subtask.id}
+                                        style={[
+                                            styles.subtaskItem,
+                                            {
+                                                backgroundColor: isActive ? theme.primary + '15' : 'transparent',
+                                                borderColor: isActive ? theme.primary : theme.border,
+                                                borderWidth: 1,
+                                            }
+                                        ]}
+                                    >
+                                        <View style={styles.subtaskContent}>
+                                            <FontAwesome
+                                                name={isCompleted ? "check-circle" : "circle-o"}
+                                                size={16}
+                                                color={isCompleted ? theme.success : theme.textTertiary}
+                                                style={styles.subtaskIcon}
+                                            />
+                                            <Text
+                                                style={[
+                                                    styles.subtaskText,
+                                                    {
+                                                        color: isCompleted ? theme.textTertiary : theme.textPrimary,
+                                                        textDecorationLine: isCompleted ? 'line-through' : 'none',
+                                                    }
+                                                ]}
+                                                numberOfLines={2}
+                                            >
+                                                {subtask.title}
+                                            </Text>
+                                        </View>
+                                        {isActive && (
+                                            <View style={[styles.activeBadge, { backgroundColor: theme.primary }]}>
+                                                <Text style={[styles.activeBadgeText, { color: theme.white }]}>Active</Text>
+                                            </View>
+                                        )}
+                                    </View>
+                                );
+                            })}
+                        </ScrollView>
+                    </>
+                )}
             </View>
         </View>
     );
@@ -100,12 +132,7 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         paddingTop: 16,
         paddingHorizontal: 16,
-        paddingBottom: 0,
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.08,
-        shadowRadius: 8,
-        elevation: 3,
-        overflow: 'hidden',
+        paddingBottom: 16,
     },
 
     // Header
@@ -113,23 +140,14 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 12,
-    },
-    badge: {
-        paddingVertical: 5,
-        paddingHorizontal: 10,
-        borderRadius: 8,
-    },
-    badgeText: {
-        fontSize: 11,
-        fontWeight: '700',
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
+        marginBottom: 16,
+        gap: 10,
     },
     headerRight: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
+        gap: 8,
+        flexShrink: 0,
     },
     progressCounter: {
         paddingVertical: 4,
@@ -139,6 +157,17 @@ const styles = StyleSheet.create({
     progressCounterText: {
         fontSize: 14,
         fontWeight: '700',
+    },
+    subtaskCounter: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 4,
+        paddingHorizontal: 8,
+        borderRadius: 8,
+    },
+    subtaskCounterText: {
+        fontSize: 12,
+        fontWeight: '600',
     },
     cancelButton: {
         width: 36,
@@ -152,35 +181,55 @@ const styles = StyleSheet.create({
     taskName: {
         fontSize: 18,
         fontWeight: '700',
-        marginBottom: 8,
+        flex: 1,
     },
-    subtaskRow: {
+
+    // Subtasks Section
+    subtasksHeader: {
+        fontSize: 12,
+        fontWeight: '700',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+        marginBottom: 12,
+    },
+    subtasksScrollView: {
+        maxHeight: 200,
+        flexGrow: 0,
+    },
+    subtasksScrollContent: {
+        gap: 8,
+    },
+    subtaskItem: {
+        borderRadius: 12,
+        padding: 12,
+        marginBottom: 8,
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
-        marginBottom: 8,
-        paddingVertical: 6,
-        paddingHorizontal: 10,
-        borderRadius: 8,
+        justifyContent: 'space-between',
+    },
+    subtaskContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    subtaskIcon: {
+        marginRight: 10,
     },
     subtaskText: {
         fontSize: 14,
+        fontWeight: '500',
         flex: 1,
     },
-    subtaskProgress: {
-        fontSize: 12,
-        marginBottom: 16,
+    activeBadge: {
+        paddingVertical: 4,
+        paddingHorizontal: 10,
+        borderRadius: 8,
+        marginLeft: 8,
     },
-
-    // Progress Bar
-    progressBarContainer: {
-        marginHorizontal: -16,
-    },
-    progressBarBg: {
-        height: 4,
-    },
-    progressBarFill: {
-        height: '100%',
-        borderRadius: 0,
+    activeBadgeText: {
+        fontSize: 10,
+        fontWeight: '700',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
 });

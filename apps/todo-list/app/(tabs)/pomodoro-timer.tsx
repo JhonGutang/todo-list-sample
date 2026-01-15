@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import CircularTimer from '@/components/pomodoro/CircularTimer';
 import TaskSelector from '@/components/pomodoro/TaskSelector';
@@ -10,13 +10,14 @@ import { useTimer } from '@/contexts/TimerContext';
 import { usePomodoro } from '@/contexts/PomodoroContext';
 import { PomodoroConfig } from '@todolist/shared-types';
 import { useTheme } from '@/contexts/ThemeContext';
+import { updateSubtask } from '@/services/subtasks';
 
 type TimerMode = 'focus' | 'task';
 
 export default function PomodoroTimerPage() {
     const [mode, setMode] = useState<TimerMode>('focus');
     const { isTimerRunning, setTimerRunning } = useTimer();
-    const { session, startSession, cancelSession, isLoading } = usePomodoro();
+    const { session, startSession, cancelSession, isLoading, pauseTimer, resumeTimer, isRunning, reloadSession } = usePomodoro();
     const { theme, themeType } = useTheme();
     const navigation = useNavigation();
     const isTimerRunningRef = React.useRef(isTimerRunning);
@@ -104,13 +105,52 @@ export default function PomodoroTimerPage() {
         await cancelSession();
     };
 
+    const handleNextSubtask = async () => {
+        if (!session || session.timer_type !== 'work') return;
+
+        const { current_subtask_index, subtasks, work_duration_minutes } = session;
+
+        if (current_subtask_index === null || current_subtask_index >= subtasks.length) {
+            Alert.alert('No More Subtasks', 'All subtasks have been completed!');
+            return;
+        }
+
+        const currentSubtask = subtasks[current_subtask_index];
+        if (currentSubtask && !currentSubtask.completed) {
+            try {
+                // Complete current subtask
+                await updateSubtask(currentSubtask.id, { completed: true });
+                
+                // Move to next subtask, reset timer, and auto-play
+                const nextSubtaskIndex = current_subtask_index + 1;
+                const workSeconds = work_duration_minutes * 60;
+                
+                // Update session with new subtask index and reset timer
+                const { updateSession } = await import('@/services/pomodoro');
+                await updateSession({
+                    current_subtask_index: nextSubtaskIndex,
+                    remaining_seconds: workSeconds,
+                    is_paused: false, // Auto-play
+                });
+
+                // Reload session to reflect changes in UI
+                await reloadSession();
+                
+                Alert.alert('Subtask Completed', `"${currentSubtask.title}" has been marked as complete!`);
+            } catch (error) {
+                console.error('Failed to complete subtask:', error);
+                Alert.alert('Error', 'Failed to complete subtask');
+            }
+        }
+    };
+
     // Show task mode if there's an active session
     const hasActiveSession = session !== null;
     const effectiveMode = hasActiveSession ? 'task' : mode;
 
     return (
         <View style={[styles.container, { backgroundColor: 'transparent' }]}>
-                {/* Tab Navigation */}
+            {/* Tab Navigation */}
             <View style={[
                 styles.tabContainer,
                 {
@@ -188,19 +228,84 @@ export default function PomodoroTimerPage() {
                 <>
                     {hasActiveSession ? (
                         <View style={styles.activeSessionContent}>
-                            {/* Timer at Top */}
-                            <View style={styles.timerSection}>
+                            {/* Scrollable Content */}
+                            <ScrollView
+                                style={styles.scrollView}
+                                contentContainerStyle={styles.scrollContent}
+                                showsVerticalScrollIndicator={false}
+                            >
+                                {/* Timer */}
                                 <CircularTimer
                                     mode="task"
                                     onTimerComplete={handleTimerComplete}
                                     onRunningStateChange={handleRunningStateChange}
                                 />
-                            </View>
-                            {/* Session Info at Bottom */}
-                            <SessionDisplay
-                                session={session}
-                                onCancel={handleCancelSession}
-                            />
+
+
+                                <View style={[styles.actionButtonsContainer]}>
+                                    <TouchableOpacity
+                                        style={styles.actionButton}
+                                        onPress={handleCancelSession}
+                                        accessibilityLabel="Reset"
+                                    >
+                                        <View style={styles.iconCircle}>
+                                            <FontAwesome name="rotate-left" size={22} color={theme.textSecondary} />
+                                        </View>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                        style={styles.actionButton}
+                                        onPress={async () => {
+                                            if (isRunning) {
+                                                await pauseTimer();
+                                            } else {
+                                                resumeTimer();
+                                            }
+                                        }}
+                                        accessibilityLabel={isRunning ? 'Pause' : 'Play'}
+                                    >
+                                        <View style={[
+                                            styles.iconCirclePrimary,
+                                            {
+                                                backgroundColor: isRunning ? theme.priorityHigh : theme.primary,
+                                                shadowColor: isRunning ? theme.priorityHigh : theme.primary,
+                                            }
+                                        ]}>
+                                            <FontAwesome
+                                                name={isRunning ? "pause" : "play"}
+                                                size={26}
+                                                color={theme.white}
+                                                style={{ marginLeft: isRunning ? 0 : 3 }}
+                                            />
+                                        </View>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                        style={[
+                                            styles.actionButton,
+                                            {
+                                                opacity: session.timer_type !== 'work' || !session.subtasks || session.subtasks.length === 0 ? 0.5 : 1
+                                            }
+                                        ]}
+                                        onPress={handleNextSubtask}
+                                        accessibilityLabel="Next"
+                                        disabled={session.timer_type !== 'work' || !session.subtasks || session.subtasks.length === 0}
+                                    >
+                                        <View style={styles.iconCircle}>
+                                            <FontAwesome name="forward" size={22} color={theme.textSecondary} />
+                                        </View>
+                                    </TouchableOpacity>
+                                </View>
+
+                                {/* Session Info with Subtasks */}
+                                <SessionDisplay
+                                    session={session}
+                                    onCancel={handleCancelSession}
+                                />
+                            </ScrollView>
+
+                            {/* Fixed Action Buttons at Bottom */}
+
                         </View>
                     ) : (
                         <TaskSelector onStartSession={handleStartSession} refreshKey={`${mode}-${focusCount}`} />
@@ -223,12 +328,44 @@ const styles = StyleSheet.create({
     },
     activeSessionContent: {
         flex: 1,
-        justifyContent: 'space-between',
     },
-    timerSection: {
+    scrollView: {
         flex: 1,
-        justifyContent: 'center',
+    },
+    scrollContent: {
+        paddingBottom: 10,
+    },
+
+    // Action Buttons
+    actionButtonsContainer: {
+        flexDirection: 'row',
+        paddingHorizontal: 24,
+        paddingVertical: 20,
+        gap: 20,
         alignItems: 'center',
+        justifyContent: 'center',
+    },
+    actionButton: {
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    iconCircle: {
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    iconCirclePrimary: {
+        width: 68,
+        height: 68,
+        borderRadius: 34,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 12,
+        elevation: 6,
     },
 
     // Tab Styles

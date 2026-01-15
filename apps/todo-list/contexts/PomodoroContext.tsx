@@ -20,6 +20,7 @@ interface PomodoroContextType {
     resumeTimer: () => void;
     completeCurrentTimer: () => Promise<void>;
     cancelSession: () => Promise<void>;
+    reloadSession: () => Promise<void>;
     remainingSeconds: number;
     isRunning: boolean;
 }
@@ -221,6 +222,7 @@ export function PomodoroProvider({ children }: { children: React.ReactNode }) {
                 resumeTimer,
                 completeCurrentTimer,
                 cancelSession,
+                reloadSession: loadSession,
                 remainingSeconds,
                 isRunning,
             }}

@@ -310,12 +310,6 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
             ) : (
                 /* Task Mode Layout */
                 <>
-                    <Text style={[styles.modeDescription, { color: theme.textSecondary }]}>
-                        {isTaskMode
-                            ? `${session?.timer_type === 'work' ? 'Work Session' : session?.break_type === 'short' ? 'Short Break' : 'Long Break'}`
-                            : 'Select a task to start tracking'}
-                    </Text>
-
                     {/* Circular Timer */}
                     <View style={styles.circularTimerContainer}>
                         <Svg width={circleSize} height={circleSize} style={styles.circularTimer}>
@@ -357,25 +351,6 @@ export default function CircularTimer({ mode, onTimerComplete, onRunningStateCha
                             </Text>
                         </View>
                     </View>
-
-                    {/* Control Buttons */}
-                    <View style={styles.controlsRow}>
-                        <TouchableOpacity
-                            style={[
-                                styles.iconButton,
-                                {
-                                    backgroundColor: theme.primary,
-                                    shadowColor: theme.primary,
-                                    borderRadius: 20,
-                                },
-                                displayIsRunning && { backgroundColor: theme.priorityHigh, shadowColor: theme.priorityHigh }
-                            ]}
-                            onPress={startPause}
-                            accessibilityLabel={displayIsRunning ? 'Pause' : 'Start'}
-                        >
-                            <FontAwesome name={displayIsRunning ? "pause" : "play"} size={32} color="white" style={{ marginLeft: displayIsRunning ? 0 : 3 }} />
-                        </TouchableOpacity>
-                    </View>
                 </>
             )}
         </View>
@@ -412,6 +387,30 @@ const styles = StyleSheet.create({
         fontSize: 15,
         marginBottom: 48,
         fontWeight: '400',
+    },
+
+    // Session Chip
+    sessionChip: {
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 20,
+        marginBottom: 24,
+        alignSelf: 'center',
+    },
+    sessionChipText: {
+        fontSize: 13,
+        fontWeight: '700',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
+    },
+
+    // Task Title
+    taskTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        textAlign: 'center',
+        marginBottom: 24,
+        paddingHorizontal: 32,
     },
 
     // Circular Timer
